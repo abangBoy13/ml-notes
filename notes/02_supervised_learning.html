@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecture 02: Supervised Learning</title>
+    <!-- MathJax 3 for math rendering -->
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']],
+          processEscapes: true,
+          processEnvironments: true
+        }
+      };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script"></script>
+    <style>
+        :root {
+            --bg-light: #f8f9fa;
+            --bg-dark: #212529;
+            --text-light: #212529;
+            --text-dark: #f8f9fa;
+            --primary: #0d6efd;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-light: #212529;
+            --bg-dark: #f8f9fa;
+            --text-light: #f8f9fa;
+            --text-dark: #212529;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--text-light);
+            background-color: var(--bg-light);
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1, h2, h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar {
+            position: sticky;
+            top: 20px;
+            width: 200px;
+            height: fit-content;
+        }
+
+        .toc-link {
+            display: block;
+            padding: 8px 12px;
+            margin: 4px 0;
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            color: var(--text-light);
+            background-color: rgba(13, 111, 253, 0.1);
+            border-left: 3px solid var(--primary);
+        }
+
+        .toc-link.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .content-column {
+            margin-left: 220px;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .callout {
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: var(--border-radius);
+            border-left: 4px solid;
+        }
+
+        .callout.blue { border-color: var(--primary); background-color: rgba(13, 111, 253, 0.05); }
+        .callout.green { border-color: #198754; background-color: rgba(25, 135, 84, 0.05); }
+        .callout.yellow { border-color: #ffc107; background-color: rgba(255, 193, 7, 0.05); }
+        .callout.red { border-color: #dc3545; background-color: rgba(220, 53, 69, 0.05); }
+        .callout.purple { border-color: #6f42c1; background-color: rgba(111, 66, 193, 0.05); }
+
+        .callot-icon {
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        katex {
+            font-size: 1.2em;
+        }
+
+        .formula-explanation {
+            margin-top: 0.5rem;
+            padding-left: 2rem;
+        }
+
+        .formula-explanation li {
+            margin-bottom: 0.5rem;
+        }
+
+        .worked-example {
+            background-color: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            border: 1px solid #dee2e6;
+        }
+
+        .final-answer {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--primary);
+            padding: 0.5rem;
+            text-align: center;
+            border: 2px dashed var(--primary);
+            display: inline-block;
+            margin: 1rem 0;
+        }
+
+        #demo-container {
+            width: 100%;
+            height: 300px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+            position: relative;
+            background-color: white;
+        }
+
+        .demo-controls {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+
+        .demo-controls input, .demo-controls button {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+        }
+
+        .demo-controls button {
+            background-color: var(--primary);
+            color: white;
+            cursor: pointer;
+        }
+
+        .demo-controls button:hover {
+            background-color: #0b5ed7;
+        }
+
+        .watch-out-list {
+            columns: 2;
+            gap: 2rem;
+        }
+
+        .practice-questions {
+            columns: 2;
+            gap: 2rem;
+        }
+
+        .practice-questions details {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius);
+        }
+
+        .practice-questions summary {
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .video-list {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .video-item {
+            flex: 1;
+            min-width: 200px;
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+        }
+
+        .cheat-sheet {
+            background-color: white;
+            border: 1px solid #ddd;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            margin: 2rem 0;
+        }
+
+        .cheat-sheet h3 {
+            margin-top: 0;
+        }
+
+        @media print {
+            .sidebar, #demo-container, .demo-controls, .video-list {
+                display: none !important;
+            }
+            body {
+                max-width: none;
+                margin: 0;
+                padding: 15mm;
+            }
+            .cheat-sheet {
+                border: none;
+                padding: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: static;
+                width: 100%;
+                margin-bottom: 2rem;
+            }
+            .content-column {
+                margin-left: 0;
+            }
+            .watch-out-list, .practice-questions {
+                columns: 1;
+            }
+        }
+
+        .dark-mode-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .dark-mode-toggle button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--border-radius);
+            background-color: var(--primary);
+            color: white;
+            cursor: pointer;
+        }
+
+        .dark-mode-toggle button:hover {
+            background-color: #0b5ed7;
+        }
+    </style>
+</head>
+<body>
+    <div class="dark-mode-toggle">
+        <button id="theme-toggle">🌓 Toggle Dark Mode</button>
+    </div>
+
+    <div class="sidebar">
+        <h3>Contents</h3>
+        <a href="#big-idea" class="toc-link">Big Idea</a>
+        <a href="#metaphor" class="toc-link">Everyday Metaphor</a>
+        <a href="#why-matters" class="toc-link">Why It Matters</a>
+        <a href="#formulas" class="toc-link">Formulas</a>
+        <a href="#worked-example" class="toc-link">Worked Example</a>
+        <a href="#interactive-demo" class="toc-link">Interactive Demo</a>
+        <a href="#watch-out" class="toc-link">Watch Out</a>
+        <a href="#experiment-link" class="toc-link">Experiment Link</a>
+        <a href="#videos" class="toc-link">Videos</a>
+        <a href="#practice" class="toc-link">Practice Questions</a>
+        <a href="#cheat-sheet" class="toc-link">Cheat Sheet</a>
+    </div>
+
+    <div class="content-column">
+        <header>
+            <h1>Lecture 02: Supervised Learning</h1>
+            <p><strong>Classification Problems and Hypothesis Functions</strong></p>
+        </header>
+
+        <!-- Section 1: Big Idea -->
+        <section class="section" id="big-idea">
+            <h2>Big Idea</h2>
+            <p>Supervised learning algorithms learn from labeled examples to make predictions on new, unseen data.</p>
+        </section>
+
+        <!-- Section 2: Everyday Metaphor -->
+        <section class="section" id="metaphor">
+            <h2>Everyday Metaphor</h2>
+            <div class="callout blue">
+                <span class="callout-icon">💡</span>
+                <ul>
+                    <li><strong>Supervised Learning = learning with a teacher</strong>: Imagine learning to recognize fruits with a teacher who shows you examples and tells you what each fruit is called. After seeing enough labeled examples, you can identify new fruits on your own.</li>
+                    <li><strong>Labeled Training Data = flashcards with answers</strong>: Each example consists of an input (features) and the correct output (label), like flashcards that show a picture on one side and the name on the other.</li>
+                    <li><strong>Hypothesis Function = your internal model</strong>: As you study the flashcards, you develop mental rules for identifying fruits. This internal model is your hypothesis function - it takes an input (what you see) and predicts an output (the fruit name).</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 3: Why It Matters -->
+        <section class="section" id="why-matters">
+            <h2>Why It Matters</h2>
+            <ul>
+                <li>Supervised learning powers most practical AI applications today</li>
+                <li>Enables computers to make accurate predictions from historical data</li>
+                <li>Forms the foundation for image recognition, speech-to-text, and recommendation systems</li>
+                <li>Provides a framework for understanding how machines learn from experience</li>
+                <li>Essential for developing AI systems that assist in medical diagnosis, finance, and autonomous vehicles</li>
+            </ul>
+        </section>
+
+        <!-- Section 4: Formulas -->
+        <section class="section" id="formulas">
+            <h2>Formulas</h2>
+
+            <div class="callout green">
+                <span class="callout-icon">📐</span>
+                <strong>Hypothesis Function for Linear Regression</strong>
+            </div>
+            <p>
+                \[
+                h_\theta(x) = \theta^T x = \theta_0 + \theta_1 x_1 + \theta_2 x_2 + \dots + \theta_n x_n
+                \]
+            </p>
+            <ul class="formula-explanation">
+                <li><strong>h_\theta(x)</strong>: Hypothesis function predicting output for input x</li>
+                <li><strong>\theta</strong>: Parameter vector (weights) that the learning algorithm will learn</li>
+                <li><strong>x</strong>: Input feature vector (with x_0 = 1 for the intercept term)</li>
+                <li><strong>\theta^T x</strong>: Dot product of parameters and features</li>
+            </ul>
+
+            <div class="callout green">
+                <span class="callout-icon">📐</span>
+                <strong>Cost Function (Mean Squared Error)</strong>
+            </div>
+            <p>
+                \[
+                J(\theta) = \frac{1}{2m} \sum_{i=1}^m \left( h_\theta(x^{(i)}) - y^{(i)} \right)^2
+                \]
+            </p>
+            <ul class="formula-explanation">
+                <li><strong>J(\theta)</strong>: Cost function measuring prediction error</li>
+                <li><strong>m</strong>: Number of training examples</li>
+                <li><strong>x^{(i)}, y^{(i)}</strong>: i-th training example (input and label)</li>
+                <li><strong>h_\theta(x^{(i)})</strong>: Prediction for the i-th example</li>
+                <li><strong>\frac{1}{2m}</strong>: Normalization factor (the 1/2 simplifies derivative calculations)</li>
+            </ul>
+
+            <div class="callout green">
+                <span class="callout-icon">📐</span>
+                <strong>Gradient Descent Update Rule</strong>
+            </div>
+            <p>
+                \[
+                \theta_j := \theta_j - \alpha \frac{\partial}{\partial \theta_j} J(\theta)
+                \]
+            </p>
+            <ul class="formula-explanation">
+                <li><strong>\theta_j</strong>: j-th parameter being updated</li>
+                <li><strong>:=\</strong>: Assignment operator (update the parameter)</li>
+                <li><strong>\alpha</strong>: Learning rate (controls step size in parameter space)</li>
+                <li><strong>\frac{\partial}{\partial \theta_j} J(\theta)</strong>: Partial derivative of cost with respect to parameter j</li>
+            </ul>
+
+            <div class="callout green">
+                <span class="callout-icon">📐</span>
+                <strong>Sigmoid Function for Logistic Regression</strong>
+            </div>
+            <p>
+                \[
+                g(z) = \frac{1}{1 + e^{-z}}
+                \]
+            </p>
+            <ul class="formula-explanation">
+                <li><strong>g(z)</strong>: Sigmoid (logistic) function</li>
+                <li><strong>z</strong>: Input to the sigmoid function (typically z = \theta^T x)</li>
+                <li><strong>e^{-z}</strong>: Exponential function</li>
+                <li><strong>\frac{1}{1 + e^{-z}}</strong>: Output ranges from 0 to 1, perfect for probabilities</li>
+            </ul>
+
+            <div class="callout green">
+                <span class="callout-icon">📐</span>
+                <strong>Hypothesis Function for Logistic Regression</strong>
+            </div>
+            <p>
+                \[
+                h_\theta(x) = g(\theta^T x) = \frac{1}{1 + e^{-\theta^T x}}
+                \]
+            </p>
+            <ul class="formula-explanation">
+                <li><strong>h_\theta(x)</strong>: Hypothesis outputting probability of positive class</li>
+                <li><strong>g(\theta^T x)</strong>: Sigmoid applied to linear prediction</li>
+                <li><strong>\theta^T x</strong>: Linear combination of features and parameters</li>
+                <li><strong>\frac{1}{1 + e^{-\theta^T x}}</strong>: Sigmoid function as defined above</li>
+            </ul>
+        </section>
+
+        <!-- Section 5: Worked Example -->
+        <section class="section" id="worked-example">
+            <h2>Worked Example by Hand</h2>
+            <div class="callout yellow">
+                <span class="callout-icon">🧮</span>
+                Simple linear regression: Find the best-fit line for points (1,1), (2,3), (3,2)
+            </div>
+            <div class="worked-example">
+                <h3>Step 1: Set up the problem</h3>
+                <p>
+                    We want to find parameters \theta_0 and \theta_1 for h_\theta(x) = \theta_0 + \theta_1 x
+                </p>
+
+                <h3>Step 2: Write the cost function</h3>
+                <p>
+                    \[
+                    J(\theta_0, \theta_1) = \frac{1}{2 \cdot 3} \left[ (\theta_0 + \theta_1 \cdot 1 - 1)^2 + (\theta_0 + \theta_1 \cdot 2 - 3)^2 + (\theta_0 + \theta_1 \cdot 3 - 2)^2 \right]
+                    \]
+                </p>
+
+                <h3>Step 3: Take partial derivatives</h3>
+                <p>
+                    \[
+                    \frac{\partial J}{\partial \theta_0} = \frac{1}{3} \left[ (\theta_0 + \theta_1 - 1) + (\theta_0 + 2\theta_1 - 3) + (\theta_0 + 3\theta_1 - 2) \right]
+                    \]
+                </p>
+                <p>
+                    \[
+                    \frac{\partial J}{\partial \theta_1} = \frac{1}{3} \left[ (\theta_0 + \theta_1 - 1) \cdot 1 + (\theta_0 + 2\theta_1 - 3) \cdot 2 + (\theta_0 + 3\theta_1 - 2) \cdot 3 \right]
+                    \]
+                </p>
+
+                <h3>Step 4: Set derivatives to zero and solve</h3>
+                <p>
+                    \[
+                    \begin{cases}
+                    \frac{\partial J}{\partial \theta_0} = 0 \\
+                    \frac{\partial J}{\partial \theta_1} = 0
+                    \end{cases}
+                    \implies
+                    \begin{cases}
+                    3\theta_0 + 6\theta_1 = 6 \\
+                    2\theta_0 + 14\theta_1 = 11
+                    \end{cases}
+                    \implies
+                    \theta_0 = \frac{1}{5}, \theta_1 = \frac{4}{5}
+                    \]
+                </p>
+
+                <h3>Step 5: Write the final hypothesis</h3>
+                <p>
+                    \[
+                    h_\theta(x) = \frac{1}{5} + \frac{4}{5} x
+                    \]
+                </p>
+
+                <div class="final-answer">h_\theta(x) = 0.2 + 0.4x</div>
+                <p><em>This line best fits the three training points in the least-squares sense.</em></p>
+            </div>
+        </section>
+
+        <!-- Section 6: Interactive Demo -->
+        <section class="section" id="interactive-demo">
+            <h2>Interactive Demo</h2>
+            <div class="callout blue">
+                <span class="callout-icon">🎛️</span>
+                <ul>
+                    <li><strong>Try this:</strong> Adjust the learning rate and initial parameters</li>
+                    <li>Watch how gradient descent finds the optimal solution</li>
+                    <li>See the cost function decrease over iterations</li>
+                </ul>
+            </div>
+            <div id="demo-container">
+                <canvas id="demoCanvas" width="600" height="400"></canvas>
+            </div>
+            <div class="demo-controls">
+                <label>
+                    Learning rate (\alpha):
+                    <input type="range" id="learningRate" min="0.01" max="0.5" step="0.01" value="0.1">
+                    <span id="learningRateValue">0.10</span>
+                </label>
+                <label>
+                    Initial \theta_0:
+                    <input type="range" id="theta0" min="-2" max="2" step="0.1" value="0">
+                    <span id="theta0Value">0.0</span>
+                </label>
+                <label>
+                    Initial \theta_1:
+                    <input type="range" id="theta1" min="-2" max="2" step="0.1" value="0">
+                    <span id="theta1Value">0.0</span>
+                </label>
+                <button id="gradientDescBtn">Run Gradient Descent</button>
+                <button id="resetBtn">Reset</button>
+            </div>
+            <p id="cost-display">Cost: <strong>--</strong></p>
+            <p id="params-display">\theta_0: <strong>--</strong>, \theta_1: <strong>--</strong></p>
+        </section>
+
+        <!-- Section 7: Watch Out -->
+        <section class="section" id="watch-out">
+            <h2>Watch Out: Common Mistakes & Exam Traps</h2>
+            <div class="callout red">
+                <span class="callout-icon">⚠️</span>
+                <ul>
+                    <li><strong>Confusing correlation with causation:</strong> Just because features are correlated with labels doesn't mean they cause the outcome. Supervised learning finds patterns, not necessarily causal relationships.</li>
+                    <li><strong>Overfitting to training data:</strong> A hypothesis that perfectly fits training data may fail on new data. Always check performance on a separate validation set.</li>
+                    <li><strong>Choosing wrong learning rate:</strong> Too large causes divergence, too small makes learning impractically slow. Always try multiple learning rates.</li>
+                    <li><strong>Forgetting feature scaling:</strong> Gradient descent converges much faster when features are on similar scales. Standardization or normalization is often essential.</li>
+                    <li><strong>Misinterpreting logistic regression outputs:</strong> The output is a probability, not a binary classification. You need a threshold (usually 0.5) to convert to class predictions.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 8: Experiment Link -->
+        <section class="section" id="experiment-link">
+            <h2>Experiment Link</h2>
+            <div class="callout purple">
+                <span class="callout-icon">🔬</span>
+                <ul>
+                    <li>Run <strong>notebooks/02_supervised_learning.ipynb</strong></li>
+                    <li>Implement linear regression from scratch using numpy</li>
+                    <li>Compare your implementation with scikit-learn's LinearRegression</li>
+                    <li>Experiment with different learning rates and datasets</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 9: Videos -->
+        <section class="section" id="videos">
+            <h2>Videos to Watch</h2>
+            <div class="callout blue">
+                <span class="callout-icon">📺</span>
+                <ul>
+                    <li>
+                        <strong>StatQuest: Machine Learning Fundamentals</strong>
+                        <br>
+                        <a href="https://www.youtube.com/results?search_query=StatQuest+machine+learning+fundamentals" target="_blank">Search: StatQuest machine learning fundamentals</a>
+                        <br>
+                        <em>Watch for: Clear explanation of supervised vs unsupervised learning</em>
+                    </li>
+                    <li>
+                        <strong>3Blue1Brown: Gradient Descent</strong>
+                        <br>
+                        <a href="https://www.youtube.com/results?search_query=3Blue1Brown+gradient+descent" target="_blank">Search: 3Blue1Brown gradient descent</a>
+                        <br>
+                        <em>Watch for: Beautiful visual explanation of how gradient descent works</em>
+                    </li>
+                    <li>
+                        <strong>StatQuest: Logistic Regression</strong>
+                        <br>
+                        <a href="https://www.youtube.com/results?search_query=StatQuest+logistic+regression" target="_blank">Search: StatQuest logistic regression</a>
+                        <br>
+                        <em>Watch for: Understanding odds, log-odds, and the sigmoid function</em>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 10: Practice Questions -->
+        <section class="section" id="practice">
+            <h2>Practice Questions</h2>
+            <div class="callout blue">
+                <span class="callout-icon">❓</span>
+                <ul>
+                    <li>Try to solve these yourself first</li>
+                    <li>Click on each question to reveal the answer</li>
+                    <li>Check your understanding of key concepts</li>
+                </ul>
+            </div>
+            <div class="practice-questions">
+                <details>
+                    <summary>Concept: What is the difference between supervised and unsupervised learning?</summary>
+                    <p>Supervised learning uses labeled training data (input-output pairs), while unsupervised learning works with unlabeled data to find hidden patterns or structure.</p>
+                </details>
+
+                <details>
+                    <summary>Concept: What does the cost function measure in supervised learning?</summary>
+                    <p>The cost function measures the average error between the hypothesis predictions and the actual training labels across all training examples.</p>
+                </details>
+
+                <details>
+                    <summary>Calculation: For the hypothesis h_\theta(x) = 1 + 2x, what is the prediction when x = 3?</summary>
+                    <p>h_\theta(3) = 1 + 2×3 = 1 + 6 = 7</p>
+                </details>
+
+                <details>
+                    <summary>Concept: Why do we divide by 2m in the mean squared error cost function?</summary>
+                    <p>The 1/2 factor simplifies the derivative calculation during gradient descent. The 1/m factor averages the error over all training examples.</p>
+                </details>
+
+                <details>
+                    <summary>Explain it simply: When would you use logistic regression instead of linear regression?</summary>
+                    <p>Use logistic regression when predicting categorical outcomes (especially binary) or probabilities. Use linear regression when predicting continuous numerical values.</p>
+                </details>
+            </div>
+        </section>
+
+        <!-- Section 11: Cheat Sheet Draft -->
+        <section class="section" id="cheat-sheet">
+            <h2>Cheat Sheet Draft</h2>
+            <div class="callout blue">
+                <span class="callout-icon">📝</span>
+                <ul>
+                    <li>Optimized for printing - fits approximately 1/7 of an A4 page</li>
+                    <li>Contains key formulas, definitions, and common mistakes</li>
+                    <li>Designed for quick review and reference</li>
+                </ul>
+            </div>
+            <div class="cheat-sheet">
+                <h3>Supervised Learning Cheat Sheet</h3>
+
+                <div class="callout green">
+                    <strong>Key Formulas</strong>
+                </div>
+                <p>
+                    \[
+                    h_\theta(x) = \theta^T x = \theta_0 + \theta_1 x_1 + \theta_2 x_2 + \dots + \theta_n x_n
+                    \]
+                </p>
+                <p>
+                    \[
+                    J(\theta) = \frac{1}{2m} \sum_{i=1}^m \left( h_\theta(x^{(i)}) - y^{(i)} \right)^2
+                    \]
+                </p>
+                <p>
+                    \[
+                    \theta_j := \theta_j - \alpha \frac{\partial}{\partial \theta_j} J(\theta)
+                    \]
+                </p>
+                <p>
+                    \[
+                    h_\theta(x) = \frac{1}{1 + e^{-\theta^T x}}
+                    \]
+                </p>
+
+                <div class="callout green">
+                    <strong>Key Definitions</strong>
+                </div>
+                <ul>
+                    <li><strong>Supervised Learning:</strong> Learning from labeled training data to make predictions</li>
+                    <li><strong>Hypothesis Function:</strong> Function that maps inputs to predicted outputs</li>
+                    <li><strong>Cost Function:</strong> Measures how well the hypothesis fits the training data</li>
+                    <li><strong>Gradient Descent:</strong> Optimization algorithm that minimizes the cost function</li>
+                    <li><strong>Overfitting:</strong> When a model learns training data too well and fails to generalize</li>
+                </ul>
+
+                <div class="callout red">
+                    <strong>Common Mistakes to Avoid</strong>
+                </div>
+                <ul>
+                    <li>Confusing correlation with causation</li>
+                    <li>Overfitting to training data</li>
+                    <li>Choosing wrong learning rate for gradient descent</li>
+                    <li>Forgetting to scale features before gradient descent</li>
+                    <li>Misinterpreting logistic regression outputs as class labels</li>
+                </ul>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Dark mode toggle
+        document.getElementById('theme-toggle').addEventListener('click', function() {
+            document.documentElement.setAttribute('data-theme',
+                document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        });
+
+        // Interactive demo for gradient descent
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('demoCanvas');
+            const ctx = canvas.getContext('2d');
+            const learningRateInput = document.getElementById('learningRate');
+            const theta0Input = document.getElementById('theta0');
+            const theta1Input = document.getElementById('theta1');
+            const learningRateValue = document.getElementById('learningRateValue');
+            const theta0Value = document.getElementById('theta0Value');
+            const theta1Value = document.getElementById('theta1Value');
+            const costDisplay = document.getElementById('cost-display');
+            const paramsDisplay = document.getElementById('params-display');
+            const gradientDescBtn = document.getElementById('gradientDescBtn');
+            const resetBtn = document.getElementById('resetBtn');
+
+            // Training data for demo: (x, y) pairs
+            const trainingData = [
+                {x: 1, y: 1},
+                {x: 2, y: 3},
+                {x: 3, y: 2}
+            ];
+
+            function updateValueDisplays() {
+                learningRateValue.textContent = parseFloat(learningRateInput.value).toFixed(2);
+                theta0Value.textContent = parseFloat(theta0Input.value).toFixed(2);
+                theta1Value.textContent = parseFloat(theta1Input.value).toFixed(2);
+            }
+
+            function drawGrid() {
+                ctx.strokeStyle = '#e0e0e0';
+                ctx.lineWidth = 1;
+
+                // Draw grid lines
+                for (let i = 0; i <= 10; i++) {
+                    const x = 50 + i * 50;  // Vertical lines
+                    const y = 50 + i * 30;  // Horizontal lines
+
+                    ctx.beginPath();
+                    ctx.moveTo(x, 50);
+                    ctx.lineTo(x, 350);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(50, y);
+                    ctx.lineTo(550, y);
+                    ctx.stroke();
+                }
+
+                // Draw axes
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(50, 350);  // X-axis
+                ctx.lineTo(550, 350);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(50, 50);   // Y-axis
+                ctx.lineTo(50, 350);
+                ctx.stroke();
+            }
+
+            function drawPoint(x, y, color, size = 4) {
+                // Convert from data coordinates to pixel coordinates
+                // x ranges from 0 to 4, y ranges from 0 to 4
+                const px = 50 + (x * 100);  // Scale x: 0-4 -> 50-450
+                const py = 350 - (y * 75);  // Scale y: 0-4 -> 350-50 (flipped for canvas)
+
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(px, py, size, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+
+            function drawHypothesisLine(theta0, theta1, color) {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+
+                // Draw line from x=0 to x=4
+                const x1 = 0;
+                const y1 = theta0 + theta1 * x1;
+                const x2 = 4;
+                const y2 = theta0 + theta1 * x2;
+
+                // Convert to pixel coordinates
+                const px1 = 50 + (x1 * 100);
+                const py1 = 350 - (y1 * 75);
+                const px2 = 50 + (x2 * 100);
+                const py2 = 350 - (y2 * 75);
+
+                ctx.moveTo(px1, py1);
+                ctx.lineTo(px2, py2);
+                ctx.stroke();
+            }
+
+            function computeCost(theta0, theta1) {
+                let totalCost = 0;
+                const m = trainingData.length;
+
+                for (let i = 0; i < m; i++) {
+                    const x = trainingData[i].x;
+                    const y = trainingData[i].y;
+                    const prediction = theta0 + theta1 * x;
+                    totalCost += Math.pow(prediction - y, 2);
+                }
+
+                return totalCost / (2 * m);
+            }
+
+            function gradientDescentStep(theta0, theta1, learningRate) {
+                let sum0 = 0;
+                let sum1 = 0;
+                const m = trainingData.length;
+
+                for (let i = 0; i < m; i++) {
+                    const x = trainingData[i].x;
+                    const y = trainingData[i].y;
+                    const prediction = theta0 + theta1 * x;
+                    sum0 += (prediction - y);
+                    sum1 += (prediction - y) * x;
+                }
+
+                const newTheta0 = theta0 - learningRate * (1/m) * sum0;
+                const newTheta1 = theta1 - learningRate * (1/m) * sum1;
+
+                return {theta0: newTheta0, theta1: newTheta1};
+            }
+
+            function updateDisplay() {
+                const theta0 = parseFloat(theta0Input.value);
+                const theta1 = parseFloat(theta1Input.value);
+                const cost = computeCost(theta0, theta1);
+
+                costDisplay.innerHTML = `Cost: <strong>${cost.toFixed(4)}</strong>`;
+                paramsDisplay.innerHTML = `\theta_0: <strong>${theta0.toFixed(4)}</strong>, \theta_1: <strong>${theta1.toFixed(4)}</strong>`;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawGrid();
+
+                // Draw training data points
+                trainingData.forEach(point => {
+                    drawPoint(point.x, point.y, '#dc3545');  // Red points
+                });
+
+                // Draw current hypothesis
+                drawHypothesisLine(theta0, theta1, '#0d6efd');  // Blue line
+            }
+
+            function runGradientDescent() {
+                const learningRate = parseFloat(learningRateInput.value);
+                let theta0 = parseFloat(theta0Input.value);
+                let theta1 = parseFloat(theta1Input.value);
+
+                // Run 50 iterations of gradient descent
+                for (let i = 0; i < 50; i++) {
+                    const newParams = gradientDescentStep(theta0, theta1, learningRate);
+                    theta0 = newParams.theta0;
+                    theta1 = newParams.theta1;
+                }
+
+                // Update the input fields
+                theta0Input.value = theta0.toFixed(4);
+                theta1Input.value = theta1.toFixed(4);
+                updateValueDisplays();
+                updateDisplay();
+            }
+
+            // Event listeners
+            [learningRateInput, theta0Input, theta1Input].forEach(input => {
+                input.addEventListener('input', () => {
+                    updateValueDisplays();
+                    updateDisplay();
+                });
+            });
+
+            gradientDescBtn.addEventListener('click', runGradientDescent);
+            resetBtn.addEventListener('click', () => {
+                learningRateInput.value = '0.1';
+                theta0Input.value = '0';
+                theta1Input.value = '0';
+                updateValueDisplays();
+                updateDisplay();
+            });
+
+            // Initialize
+            updateValueDisplays();
+            updateDisplay();
+        });
+
+        // Table of contents highlighting
+        document.addEventListener('DOMContentLoaded', function() {
+            const sections = document.querySelectorAll('.section');
+            const tocLinks = document.querySelectorAll('.toc-link');
+
+            function highlightToc() {
+                let scrollPosition = window.scrollY + 100; // Offset for header
+
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    const sectionHeight = section.offsetHeight;
+                    const sectionId = section.getAttribute('id');
+
+                    if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+                        tocLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href') === '#' + sectionId) {
+                                link.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            }
+
+            window.addEventListener('scroll', highlightToc);
+            // Initial call
+            highlightToc();
+        });
+    </script>
+</body>
+</html>

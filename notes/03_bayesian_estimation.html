@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecture 03: Bayesian Parametric Estimation</title>
+    <!-- MathJax 3 for math rendering -->
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']],
+          processEscapes: true,
+          processEnvironments: true
+        }
+      };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script"></script>
+    <style>
+        :root {
+            --bg-light: #f8f9fa;
+            --bg-dark: #212529;
+            --text-light: #212529;
+            --text-dark: #f8f9fa;
+            --primary: #0d6efd;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-light: #212529;
+            --bg-dark: #f8f9fa;
+            --text-light: #f8f9fa;
+            --text-dark: #212529;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--text-light);
+            background-color: var(--bg-light);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            color: #6c757d;
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .formula {
+            background-color: rgba(13, 112, 253, 0.1);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .symbols {
+            margin: 1.5rem 0;
+        }
+
+        .symbols h3 {
+            margin-bottom: 0.5rem;
+            color: #6c757d;
+        }
+
+        .symbols ul {
+            line-height: 1.8;
+        }
+
+        .example {
+            background-color: #e9ecef;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+        }
+
+        .experiment-link, .videos, .practice-questions, .cheat-sheet {
+            background-color: #e9ecef;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+        }
+
+        .watch-out {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+        }
+
+        .watch-out h3 {
+            color: #856404;
+            margin-top: 0;
+        }
+
+        details {
+            margin: 1rem 0;
+        }
+
+        summary {
+            cursor: pointer;
+            padding: 0.5rem;
+            background-color: #dee2e6;
+            border-radius: var(--border-radius);
+        }
+
+        details[open] summary {
+            background-color: #cbd3da;
+        }
+
+        details > * {
+            margin: 0.5rem 1rem;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .stat {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .dark-mode-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .dark-mode-toggle button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--border-radius);
+            background-color: var(--primary);
+            color: white;
+            cursor: pointer;
+        }
+
+        .dark-mode-toggle button:hover {
+            background-color: #0b5ed7;
+        }
+
+        @media (max-width: 768px) {
+            .stats {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        @media print {
+            .dark-mode-toggle {
+                display: none !important;
+            }
+            body {
+                max-width: none;
+                margin: 0;
+                padding: 15mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dark-mode-toggle">
+        <button id="theme-toggle">🌓 Toggle Dark Mode</button>
+    </div>
+
+    <header>
+        <h1>Lecture 03: Bayesian Parametric Estimation</h1>
+        <p class="subtitle">Bayesian probabilities, classification applications, and updating beliefs with evidence</p>
+    </header>
+
+    <div class="section">
+        <h2>Big Idea</h2>
+        <p>Bayesian estimation treats parameters as random variables with prior distributions, updating beliefs with evidence to form posterior distributions. This approach provides a natural way to incorporate prior knowledge and quantify uncertainty in machine learning models.</p>
+    </div>
+
+    <div class="section">
+        <h2>Everyday Metaphor</h2>
+        <blockquote>
+            💡 **Bayesian Estimation = updating beliefs with evidence**: Imagine you're trying to estimate the probability that a coin is heads. You start with a prior belief (maybe you think it's fair), then you flip the coin and observe outcomes. Each flip updates your belief about the coin's bias.
+        </blockquote>
+        <blockquote>
+            **Prior Distribution = initial belief**: Your starting assumption about parameters before seeing any data, expressed as a probability distribution.
+        </blockquote>
+        <blockquote>
+            **Likelihood = evidence from data**: How probable the observed data is for different parameter values.
+        </blockquote>
+        <blockquote>
+            **Posterior Distribution = updated belief**: Your revised belief after combining the prior with the observed data using Bayes' theorem.
+        </blockquote>
+    </div>
+
+    <div class="section">
+        <h2>Why It Matters</h2>
+        <ul>
+            <li>Provides a principled way to incorporate prior knowledge into statistical models</li>
+            <li>Naturally handles uncertainty in parameter estimates</li>
+            <li>Enables sequential learning as new data arrives</li>
+            <li>Forms the foundation for Bayesian machine learning methods</li>
+            <li>Essential for understanding modern approaches to model regularization and uncertainty quantification</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Formulas</h2>
+
+        <div class="formula">
+            <p>$$P(\theta|\mathcal{D}) = \frac{P(\mathcal{D}|\theta) P(\theta)}{P(\mathcal{D})}$$</p>
+            <p><strong>Bayes' Theorem</strong></p>
+        </div>
+
+        <div class="symbols">
+            <h3>What each symbol means in Bayes' Theorem:</h3>
+            <ul>
+                <li><strong>P(θ|𝒟)</strong>: Posterior probability of parameters θ given data 𝒟</li>
+                <li><strong>P(𝒟|θ)</strong>: Likelihood of data 𝒟 given parameters θ</li>
+                <li><strong>P(θ)</strong>: Prior probability of parameters θ</li>
+                <li><strong>P(𝒟)</strong>: Marginal likelihood or evidence (normalizing constant)</li>
+            </ul>
+        </div>
+
+        <div class="formula">
+            <p>$$P(\theta|\mathcal{D}) = \text{Beta}(\theta; \alpha+k, \beta+n-k)$$</p>
+            <p><strong>Posterior for Beta-Binomial conjugate pair</strong></p>
+        </div>
+
+        <div class="symbols">
+            <h3>What each symbol means in the Beta-Binomial update:</h3>
+            <ul>
+                <li><strong>θ</strong>: Parameter representing probability of success</li>
+                <li><strong>α, β</strong>: Prior parameters (pseudo-counts)</li>
+                <li><strong>k</strong>: Number of successes observed</li>
+                <li><strong>n</strong>: Total number of trials</li>
+                <li>The beauty: posterior is same family as prior with updated parameters</li>
+            </ul>
+        </div>
+
+        <div class="formula">
+            <p>$$P(y_{new}=1|\mathcal{D}) = \frac{\alpha+k}{\alpha+\beta+n}$$</p>
+            <p><strong>Posterior predictive distribution</strong></p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Worked Example by Hand</h2>
+        <div class="example">
+            <p>🧮 Coin flipping example: We observe 7 heads in 10 flips. Start with Beta(2,2) prior, find posterior and predictive distribution.</p>
+
+            <h3>Step 1: Specify the prior</h3>
+            <p>We choose a Beta(2,2) prior, which represents a weak belief that the coin is fair.</p>
+            <p>$$P(\theta) = \text{Beta}(\theta; 2, 2) = \frac{\theta^{2-1}(1-\theta)^{2-1}}{B(2,2)} = 6\theta(1-\theta)$$</p>
+
+            <h3>Step 2: Write the likelihood</h3>
+            <p>For 7 heads in 10 flips, the binomial likelihood is:</p>
+            <p>$$P(\mathcal{D}|\theta) = \theta^7 (1-\theta)^{10-7} = \theta^7 (1-\theta)^3$$</p>
+
+            <h3>Step 3: Compute the posterior (up to proportionality)</h3>
+            <p>$$P(\theta|\mathcal{D}) \propto P(\mathcal{D}|\theta) P(\theta) = [\theta^7 (1-\theta)^3] [6\theta(1-\theta)] = 6\theta^{8}(1-\theta)^{4}$$</p>
+
+            <h3>Step 4: Recognize the posterior distribution</h3>
+            <p>This is proportional to a Beta distribution:</p>
+            <p>$$P(\theta|\mathcal{D}) = \text{Beta}(\theta; 2+7, 2+3) = \text{Beta}(\theta; 9, 5)$$</p>
+
+            <h3>Step 5: Compute the posterior mean</h3>
+            <p>$$E[\theta|\mathcal{D}] = \frac{\alpha}{\alpha+\beta} = \frac{9}{9+5} = \frac{9}{14} \approx 0.643$$</p>
+
+            <h3>Step 6: Compute the predictive distribution</h3>
+            <p>$$P(y_{new}=1|\mathcal{D}) = \frac{\alpha+k}{\alpha+\beta+n} = \frac{2+7}{2+2+10} = \frac{9}{14} \approx 0.643$$</p>
+
+            <p><strong>Answer:</strong> After observing 7 heads in 10 flips with Beta(2,2) prior, the posterior is Beta(9,5) and the predicted probability of heads on the next flip is 9/14 ≈ 0.643.</p>
+            <p><em>This demonstrates how Bayesian estimation combines prior beliefs with observed data.</em></p>
+        </div>
+    </div>
+
+    <div class="experiment-link">
+        <h2>Experiment Link</h2>
+        <p>🔬 Run <strong>Section 2: Bayesian Coin Flipping</strong> in the Jupyter notebook to visualize how different priors affect the posterior when observing coin flip data.</p>
+        <p>This section will include:</p>
+        <ul>
+            <li>Interactive exploration of different Beta priors</li>
+            <li>Visualization of prior, likelihood, and posterior distributions</li>
+            <li>Calculation of posterior statistics and predictive distributions</li>
+            <li>Sequential updating as new data arrives</li>
+        </ul>
+    </div>
+
+    <div class="watch-out">
+        <h3>Watch Out: Common Mistakes & Exam Traps</h3>
+        <ul>
+            <li><strong>Confusing likelihood with probability:</strong> Likelihood is not a probability distribution over parameters; it's a function of parameters given fixed data.</li>
+            <li><strong>Ignoring the normalizing constant:</strong> In Bayesian inference, the posterior is proportional to likelihood × prior, but you often need the normalizing constant for model comparison.</li>
+            <li><strong>Choosing inappropriate priors:</strong> Priors should reflect genuine prior knowledge or be weakly informative; improper priors can lead to improper posteriors.</li>
+            <li><strong>Misinterpreting credible intervals:</strong> A 95% credible interval means there's a 95% probability that the parameter lies in that interval (given the data and prior), not that 95% of such intervals from repeated experiments would contain the true parameter.</li>
+            <li><strong>Overlooking model complexity:</strong> More complex models can fit data better but may overfit; Bayesian model comparison automatically penalizes complexity through the marginal likelihood.</li>
+        </ul>
+    </div>
+
+    <div class="videos">
+        <h2>Videos to Watch</h2>
+        <p>📺 <strong>Recommended video searches:</strong></p>
+        <ol>
+            <li><strong>Bayesian Statistics for Beginners</strong><br>
+                Search: https://www.youtube.com/results?search_query=Bayesian+statistics+beginners<br>
+                Watch for: Intuitive explanation of Bayes' theorem and prior/posterior concepts</li>
+            <li><strong>StatQuest: Naive Bayes</strong><br>
+                Search: https://www.youtube.com/results?search_query=StatQuest+Naive+Bayes<br>
+                Watch for: Clear explanation of how Naive Bayes works and when to use it</li>
+            <li><strong>Mathematical Monk: Bayesian Inference</strong><br>
+                Search: https://www.youtube.com/results?search_query=Mathematical+Monk+Bayesian+inference<br>
+                Watch for: Mathematical treatment of Bayesian concepts with examples</li>
+        </ol>
+    </div>
+
+    <div class="practice-questions">
+        <h2>Practice Questions</h2>
+        <p>❓ Try to solve these yourself first, then check the answers below!</p>
+
+        <details>
+            <summary>Question 1 (Concept): What is the key difference between frequentist and Bayesian approaches to probability?</summary>
+            <p>Frequentists interpret probability as long-run frequency of events, while Bayesians interpret probability as a degree of belief or uncertainty that can be updated with new evidence.</p>
+        </details>
+
+        <details>
+            <summary>Question 2 (Concept): What does it mean for a prior to be conjugate to a likelihood?</summary>
+            <p>A prior is conjugate to a likelihood if the posterior distribution belongs to the same family as the prior distribution, making analytical computation of the posterior possible.</p>
+        </details>
+
+        <details>
+            <summary>Question 3 (Calculation): If we have a Beta(3,3) prior and observe 5 heads in 8 flips, what is the posterior distribution?</summary>
+            <p>Posterior = Beta(3+5, 3+(8-5)) = Beta(8, 6)</p>
+        </details>
+
+        <details>
+            <summary>Question 4 (Concept): Why do we add pseudo-counts in Laplace smoothing for Naive Bayes?</summary>
+            <p>Laplace smoothing adds pseudo-counts to avoid zero probabilities, which would cause the entire posterior probability to become zero when multiplying likelihoods (since anything times zero is zero).</p>
+        </details>
+
+        <details>
+            <summary>Question 5 (Explain it simply): When would you prefer a Bayesian approach over a frequentist approach?</summary>
+            <p>Prefer Bayesian approaches when: you have prior knowledge to incorporate, you need to quantify uncertainty in parameters, you're working with small datasets, or you want to perform sequential learning as new data arrives.</p>
+        </details>
+    </div>
+
+    <div class="cheat-sheet">
+        <h2>Cheat Sheet Draft</h2>
+        <p>📝 This section is optimized for printing - it should fit approximately 1/7 of an A4 page when printed.</p>
+
+        <div class="formula">
+            <p>$$P(\theta|\mathcal{D}) = \frac{P(\mathcal{D}|\theta) P(\theta)}{P(\mathcal{D})}$$</p>
+            <p><strong>Bayes' Theorem</strong></p>
+        </div>
+
+        <div class="formula">
+            <p>$$P(\theta|\mathcal{D}) = \text{Beta}(\theta; \alpha+k, \beta+n-k)$$</p>
+            <p><strong>Posterior for Beta-Binomial</strong></p>
+        </div>
+
+        <div class="formula">
+            <p>$$P(y_{new}=1|\mathcal{D}) = \frac{\alpha+k}{\alpha+\beta+n}$$</p>
+            <p><strong>Posterior predictive distribution</strong></p>
+        </div>
+
+        <h3>Key Definitions</h3>
+        <ul>
+            <li><strong>Prior Distribution:</strong> Initial belief about parameters before seeing data</li>
+            <li><strong>Likelihood:</strong> Probability of observing the data given specific parameter values</li>
+            <li><strong>Posterior Distribution:</strong> Updated belief about parameters after seeing data</li>
+            <li><strong>Conjugate Prior:</strong> Prior that results in posterior from same family when combined with likelihood</li>
+            <li><strong>Credible Interval:</strong> Bayesian analog to confidence interval; interval containing specified probability mass</li>
+        </ul>
+
+        <h3>Common Mistakes to Avoid</h3>
+        <ul>
+            <li>Confusing likelihood with probability</li>
+            <li>Ignoring the normalizing constant in Bayes' theorem</li>
+            <li>Choosing inappropriate priors that bias results</li>
+            <li>Misinterpreting credible intervals as frequentist confidence intervals</li>
+            <li>Overlooking model complexity in Bayesian model comparison</li>
+        </ul>
+    </div>
+
+    <script>
+        // Dark mode toggle
+        document.getElementById('theme-toggle').addEventListener('click', function() {
+            document.documentElement.setAttribute('data-theme',
+                document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        });
+    </script>
+</body>
+</html>

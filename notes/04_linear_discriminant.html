@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecture 04: Linear Discriminant and Kernel Machines</title>
+    <!-- MathJax 3 for math rendering -->
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']],
+          processEscapes: true,
+          processEnvironments: true
+        }
+      };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script"></script>
+    <style>
+        :root {
+            --bg-light: #f8f9fa;
+            --bg-dark: #212529;
+            --text-light: #212529;
+            --text-dark: #f8f9fa;
+            --primary: #0d6efd;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-light: #212529;
+            --bg-dark: #f8f9fa;
+            --text-light: #f8f9fa;
+            --text-dark: #212529;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--text-light);
+            background-color: var(--bg-light);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            color: #6c757d;
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .formula {
+            background-color: rgba(13, 112, 253, 0.1);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .symbols {
+            margin: 1.5rem 0;
+        }
+
+        .symbols h3 {
+            margin-bottom: 0.5rem;
+            color: #6c757d;
+        }
+
+        .symbols ul {
+            line-height: 1.8;
+        }
+
+        .example {
+            background-color: #e9ecef;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+        }
+
+        .experiment-link, .videos, .practice-questions, .cheat-sheet {
+            background-color: #e9ecef;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+        }
+
+        .watch-out {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+        }
+
+        .watch-out h3 {
+            color: #856404;
+            margin-top: 0;
+        }
+
+        details {
+            margin: 1rem 0;
+        }
+
+        summary {
+            cursor: pointer;
+            padding: 0.5rem;
+            background-color: #dee2e6;
+            border-radius: var(--border-radius);
+        }
+
+        details[open] summary {
+            background-color: #cbd3da;
+        }
+
+        details > * {
+            margin: 0.5rem 1rem;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .stat {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .dark-mode-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .dark-mode-toggle button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--border-radius);
+            background-color: var(--primary);
+            color: white;
+            cursor: pointer;
+        }
+
+        .dark-mode-toggle button:hover {
+            background-color: #0b5ed7;
+        }
+
+        @media (max-width: 768px) {
+            .stats {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        @media print {
+            .dark-mode-toggle {
+                display: none !important;
+            }
+            body {
+                max-width: none;
+                margin: 0;
+                padding: 15mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dark-mode-toggle">
+        <button id="theme-toggle">🌓 Toggle Dark Mode</button>
+    </div>
+
+    <header>
+        <h1>Lecture 04: Linear Discriminant and Kernel Machines</h1>
+        <p class="subtitle">Classification boundaries, linear discriminants, and kernel methods for nonlinear separation</p>
+    </header>
+
+    <div class="section">
+        <h2>Big Idea</h2>
+        <p>Linear discriminant analysis finds optimal linear boundaries between classes, while kernel methods implicitly map data to higher dimensions where linear separation is possible. Together they form powerful approaches to classification that handle both linear and nonlinear patterns in data.</p>
+    </div>
+
+    <div class="section">
+        <h2>Everyday Metaphor</h2>
+        <blockquote>
+            💡 **Linear Discriminant = finding the best road between towns**: Imagine two towns (classes) scattered across a landscape. Linear discriminant analysis finds the road (boundary) that best separates them while keeping each town on its proper side.
+        </blockquote>
+        <blockquote>
+            **Kernel Method = teleporting to a mountain view**: Sometimes you can't see a clear separation from ground level. Kernel methods are like teleporting to a mountaintop where the landscape appears different and separation becomes easy.
+        </blockquote>
+        <blockquote>
+            **Feature Space = different perspectives on data**: The original features give one view of your data. Kernels implicitly compute what your data would look like from other perspectives without actually computing those views.
+        </blockquote>
+    </div>
+
+    <div class="section">
+        <h2>Why It Matters</h2>
+        <ul>
+            <li>LDA provides interpretable linear boundaries with probabilistic outputs</li>
+            <li>Kernel methods enable linear algorithms to solve nonlinear problems</li>
+            <li>The kernel trick avoids explicit computation in high-dimensional spaces</li>
+            <li>Foundation for SVMs and other advanced classification techniques</li>
+            <li>Essential for understanding how to handle complex, nonlinear relationships in data</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Formulas</h2>
+
+        <div class="formula">
+            <p>$$\\mathbf{w} = \\Sigma^{-1} (\\mu_1 - \\mu_2)$$</p>
+            <p><strong>LDA weight vector</strong></p>
+        </div>
+
+        <div class="symbols">
+            <h3>What each symbol means in LDA:</h3>
+            <ul>
+                <li><strong>\\mathbf{w}</strong>: Weight vector defining the discriminant direction</li>
+                <li><strong>\\Sigma^{-1}</strong>: Inverse of covariance matrix</li>
+                <li><strong>\\mu_1, \\mu_2</strong>: Mean vectors for each class</li>
+                <li><strong>\\mathbf{x}</strong>: Input feature vector</li>
+                <li><strong>b_0</strong>: Bias term (incorporates class priors)</li>
+                <li><strong>y = \\mathbf{w}^T \\mathbf{x} + b_0</strong>: Discriminant score</li>
+            </ul>
+        </div>
+
+        <div class="formula">
+            <p>$$y = \\mathbf{w}^T \\mathbf{x} + b_0$$</p>
+            <p><strong>LDA discriminant function</strong></p>
+        </div>
+
+        <div class="symbols">
+            <h3>What each symbol means in the discriminant function:</h3>
+            <ul>
+                <li><strong>\\mathbf{w}^T \\mathbf{x} + b_0</strong>: Discriminant function value</li>
+                <li><strong>= 0</strong>: Decision boundary where classes are equally likely</li>
+                <li>Points with <strong>\\mathbf{w}^T \\mathbf{x} + b_0 > 0</strong> classified as class 1</li>
+                <li>Points with <strong>\\mathbf{w}^T \\mathbf{x} + b_0 < 0</strong> classified as class 2</li>
+            </ul>
+        </div>
+
+        <div class="formula">
+            <p>$$K(\\mathbf{x}_i, \\mathbf{x}_j) = \\langle \\phi(\\mathbf{x}_i), \\phi(\\mathbf{x}_j) \\rangle$$</p>
+            <p><strong>The kernel trick</strong></p>
+        </div>
+
+        <div class="symbols">
+            <h3>What each symbol means in the kernel trick:</h3>
+            <ul>
+                <li><strong>K(\\mathbf{x}_i, \\mathbf{x}_j)</strong>: Kernel function computing similarity</li>
+                <li><strong>\\phi</strong>: Feature mapping to higher-dimensional space (often implicit)</li>
+                <li><strong>\\langle \\cdot, \\cdot \\rangle</strong>: Inner product (dot product)</li>
+                <li>The kernel trick computes \\phi(\\mathbf{x})^T \\phi(\\mathbf{z}) without explicitly computing \\phi(\\cdot)</li>
+            </ul>
+        </div>
+
+        <div class="formula">
+            <p>$$K(\\mathbf{x}, \\mathbf{z}) = \\exp\\left(-\\gamma \\| \\mathbf{x} - \\mathbf{z} \\|^2\\right)$$</p>
+            <p><strong>RBF (Gaussian) kernel</strong></p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Worked Example by Hand</h2>
+        <div class="example">
+            <p>🧮 Simple LDA: Two classes with means [0,0] and [2,2], identity covariance. Find the discriminant vector and classify point [1,1].</p>
+
+            <h3>Step 1: Define the problem</h3>
+            <p>Class 1: \\mu_1 = [0, 0]^T</p>
+            <p>Class 2: \\mu_2 = [2, 2]^T</p>
+            <p>Shared covariance: \\Sigma = I = [[1,0],[0,1]]</p>
+
+            <h3>Step 2: Compute the discriminant vector</h3>
+            <p>$$\\mathbf{w} = \\Sigma^{-1} (\\mu_1 - \\mu_2) = I^{-1} ([0,0]^T - [2,2]^T) = [-2, -2]^T$$</p>
+
+            <h3>Step 3: Compute the bias term (assuming equal priors)</h3>
+            <p>$$b_0 = -\\frac{1}{2} \\mathbf{w}^T (\\mu_1 + \\mu_2) = -\\frac{1}{2} [-2,-2] [0,0]^T + [2,2]^T = -\\frac{1}{2} [-2,-2] [2,2]^T = 4$$</p>
+
+            <h3>Step 4: Write the discriminant function</h3>
+            <p>$$y = \\mathbf{w}^T \\mathbf{x} + b_0 = [-2, -2] [x_1, x_2]^T + 4 = -2x_1 - 2x_2 + 4$$</p>
+
+            <h3>Step 5: Classify the point [1,1]</h3>
+            <p>$$y = -2(1) - 2(1) + 4 = -2 -2 + 4 = 0$$</p>
+
+            <p><strong>Answer:</strong> The point [1,1] lies exactly on the decision boundary (y=0).</p>
+            <p><em>With equal priors and symmetric classes, [1,1] is equidistant from both class means.</em></p>
+        </div>
+    </div>
+
+    <div class="experiment-link">
+        <h2>Experiment Link</h2>
+        <p>🔬 Run <strong>Section 2: Kernel PCA Experiment</strong> in the Jupyter notebook to compare standard PCA with kernel PCA on nonlinear data and see how the kernel trick enables linear separation.</p>
+        <p>This section will include:</p>
+        <ul>
+            <li>Generating nonlinear datasets (circles, moons, spirals)</li>
+            <li>Applying both PCA and Kernel PCA with different kernels</li>
+            <li>Visualizing the results in original and transformed spaces</li>
+            <li>Quantifying separation quality using clustering metrics</li>
+        </ul>
+    </div>
+
+    <div class="watch-out">
+        <h3>Watch Out: Common Mistakes & Exam Traps</h3>
+        <ul>
+            <li><strong>Confusing LDA with logistic regression:</strong> Both are linear classifiers, but LDA assumes Gaussian distributions with shared covariance, while logistic regression makes no distributional assumptions.</li>
+            <li><strong>Misunderstanding the kernel trick:</strong> Kernels don't explicitly compute \\phi(\\mathbf{x}); they compute inner products \\langle \\phi(\\mathbf{x}_i), \\phi(\\mathbf{x}_j) \\rangle directly.</li>
+            <li><strong>Choosing inappropriate kernel parameters:</strong> \\gamma too small -> underfitting, \\gamma too large -> overfitting (similar to bandwidth in density estimation).</li>
+            <li><strong>Forgetting that LDA requires shared covariance:</strong> If classes have very different covariances, consider Quadratic Discriminant Analysis (QDA) instead.</li>
+            <li><strong>Overlooking kernel computation cost:</strong> While the kernel trick avoids explicit \\phi(\\mathbf{x}) computation, computing the full kernel matrix is still O(n^2) in memory and time.</li>
+        </ul>
+    </div>
+
+    <div class="videos">
+        <h2>Videos to Watch</h2>
+        <p>📺 <strong>Recommended video searches:</strong></p>
+        <ol>
+            <li><strong>LDA vs Logistic Regression</strong><br>
+                Search: https://www.youtube.com/results?search_query=Linear+Discriminant+Analysis+vs+Logistic+Regression<br>
+                Watch for: Clear comparison of when to use each method</li>
+            <li><strong>Kernel Trick Made Easy</strong><br>
+                Search: https://www.youtube.com/results?search_query=kernel+trick+explained+simple<br>
+                Watch for: Intuitive understanding of how kernels work without explicit mapping</li>
+            <li><strong>StatQuest: SVM and Kernels</strong><br>
+                Search: https://www.youtube.com/results?search_query=StatQuest+Support+Vector+Machine<br>
+                Watch for: How kernels enable SVMs to solve nonlinear classification problems</li>
+        </ol>
+    </div>
+
+    <div class="practice-questions">
+        <h2>Practice Questions</h2>
+        <p>❓ Try to solve these yourself first, then check the answers below!</p>
+
+        <details>
+            <summary>Question 1 (Concept): What is the main assumption of LDA that distinguishes it from logistic regression?</summary>
+            <p>LDA assumes that features follow Gaussian distributions with identical covariance matrices across classes, while logistic regression makes no distributional assumptions about the features.</p>
+        </details>
+
+        <details>
+            <summary>Question 2 (Concept): What does the kernel trick allow us to do?</summary>
+            <p>The kernel trick allows us to compute inner products in a high-dimensional feature space without explicitly computing the feature mapping, enabling linear algorithms to solve nonlinear problems efficiently.</p>
+        </details>
+
+        <details>
+            <summary>Question 3 (Calculation): For the polynomial kernel K(\\mathbf{x}, \\mathbf{z}) = (\\mathbf{x}^T \\mathbf{z} + 1)^2, what is K([1,2], [3,4])?</summary>
+            <p>[1,2]^T [3,4] = 1×3 + 2×4 = 3 + 8 = 11<br>(11 + 1)^2 = 12^2 = 144</p>
+        </details>
+
+        <details>
+            <summary>Question 4 (Concept): When would you prefer Kernel PCA over standard PCA?</summary>
+            <p>Prefer Kernel PCA when the data has nonlinear structure that cannot be captured by linear combinations of the original features, but becomes linearly separable in some feature space.</p>
+        </details>
+
+        <details>
+            <summary>Question 5 (Explain it simply): What's the difference between LDA and QDA?</summary>
+            <p>LDA assumes all classes share the same covariance matrix, while QDA allows each class to have its own covariance matrix. LDA produces linear decision boundaries, QDA produces quadratic ones.</p>
+        </details>
+    </div>
+
+    <div class="cheat-sheet">
+        <h2>Cheat Sheet Draft</h2>
+        <p>📝 This section is optimized for printing - it should fit approximately 1/7 of an A4 page when printed.</p>
+
+        <div class="formula">
+            <p>$$\\mathbf{w} = \\Sigma^{-1} (\\mu_1 - \\mu_2)$$</p>
+            <p><strong>LDA weight vector</strong></p>
+        </div>
+
+        <div class="formula">
+            <p>$$y = \\mathbf{w}^T \\mathbf{x} + b_0$$</p>
+            <p><strong>LDA discriminant function</strong></p>
+        </div>
+
+        <div class="formula">
+            <p>$$K(\\mathbf{x}, \\mathbf{z}) = \\langle \\phi(\\mathbf{x}), \\phi(\\mathbf{z}) \\rangle$$</p>
+            <p><strong>The kernel trick</strong></p>
+        </div>
+
+        <div class="formula">
+            <p>$$K(\\mathbf{x}, \\mathbf{z}) = \\exp\\left(-\\gamma \\| \\mathbf{x} - \\mathbf{z} \\|^2\\right)$$</p>
+            <p><strong>RBF kernel</strong></p>
+        </div>
+
+        <h3>Key Definitions</h3>
+        <ul>
+            <li><strong>Linear Discriminant Analysis:</strong> Finds linear combination of features that separates classes</li>
+            <li><strong>Kernel Function:</strong> Computes inner product in feature space without explicit mapping</li>
+            <li><strong>Kernel Trick:</strong> Uses kernels to enable linear algorithms in high-dimensional spaces</li>
+            <li><strong>Feature Space:</strong> Space where data is represented after applying \\phi(\\cdot)</li>
+            <li><strong>Gram Matrix:</strong> Matrix of all pairwise kernel values K(\\mathbf{x}_i, \\mathbf{x}_j)</li>
+        </ul>
+
+        <h3>Common Mistakes to Avoid</h3>
+        <ul>
+            <li>Confusing LDA with logistic regression assumptions</li>
+            <li>Misunderstanding that kernels compute inner products, not explicit mappings</li>
+            <li>Choosing inappropriate kernel parameters (\\gamma)</li>
+            <li>Forgetting LDA's shared covariance assumption</li>
+            <li>Overlooking computational cost of kernel matrices</li>
+        </ul>
+    </div>
+
+    <script>
+        // Dark mode toggle
+        document.getElementById('theme-toggle').addEventListener('click', function() {
+            document.documentElement.setAttribute('data-theme',
+                document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        });
+    </script>
+</body>
+</html>

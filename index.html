@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Notes - Mathematics Primer</title>
+    <style>
+        :root {
+            --bg-light: #f8f9fa;
+            --bg-dark: #212529;
+            --text-light: #212529;
+            --text-dark: #f8f9fa;
+            --primary: #0d6efd;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-light: #212529;
+            --bg-dark: #f8f9fa;
+            --text-light: #f8f9fa;
+            --text-dark: #212529;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--text-light);
+            background-color: var(--bg-light);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            color: #6c757d;
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 1rem;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            min-width: 120px;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .lecture-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .lecture-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .lecture-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .lecture-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+
+        .lecture-content {
+            padding: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .lecture-content h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .lecture-content p {
+            color: #6c757d;
+            margin-bottom: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .lecture-btn {
+            display: block;
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .lecture-btn:hover {
+            background-color: #0b5ed7;
+        }
+
+        .progress-section {
+            background-color: white;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin: 2rem 0;
+        }
+
+        .progress-section h2 {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-bar {
+            height: 20px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        .dark-mode-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .dark-mode-toggle button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--border-radius);
+            background-color: var(--primary);
+            color: white;
+            cursor: pointer;
+        }
+
+        .dark-mode-toggle button:hover {
+            background-color: #0b5ed7;
+        }
+
+        @media (max-width: 768px) {
+            .stats {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .lecture-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media print {
+            .dark-mode-toggle, .stats, .progress-section {
+                display: none !important;
+            }
+            body {
+                max-width: none;
+                margin: 0;
+                padding: 15mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dark-mode-toggle">
+        <button id="theme-toggle">🌓 Toggle Dark Mode</button>
+    </div>
+
+    <header>
+        <h1>Machine Learning Notes</h1>
+        <p class="subtitle">Mathematics Primer Series - Hanyang University ERICA</p>
+    </header>
+
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-number">7</div>
+            <div class="stat-label">Lectures</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number">2026</div>
+            <div class="stat-label">Academic Year</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number">Ready</div>
+            <div class="stat-label">Lecture 07</div>
+        </div>
+    </div>
+
+    <div class="progress-section">
+        <h2>Overall Progress</h2>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill">100%</div>
+        </div>
+        <div class="progress-text">
+            <span>7/7 lectures completed</span>
+            <span>100% done</span>
+        </div>
+    </div>
+
+    <h2>Lectures</h2>
+    <div class="lecture-grid">
+        <!-- Lecture 01 -->
+        <div class="lecture-card">
+            <img src="notes/01_math_primer.html" alt="Lecture 01: Mathematics Primer" onerror="this.src='https://via.placeholder.com/400x180?text=Math+Primer'">
+            <div class="lecture-content">
+                <h3>Lecture 01: Mathematics Primer</h3>
+                <p>Matrix basics, determinants, eigenvalues, and eigenvectors - the mathematical foundation for machine learning algorithms.</p>
+                <a href="notes/01_math_primer.html" class="lecture-btn">View Lecture</a>
+            </div>
+        </div>
+
+        <!-- Lecture 02 -->
+        <div class="lecture-card">
+            <img src="notes/02_supervised_learning.html" alt="Lecture 02: Supervised Learning" onerror="this.src='https://via.placeholder.com/400x180?text=Supervised+Learning'">
+            <div class="lecture-content">
+                <h3>Lecture 02: Supervised Learning</h3>
+                <p>Classification problems, learning from examples, and mathematical formulation of hypothesis functions.</p>
+                <a href="notes/02_supervised_learning.html" class="lecture-btn">View Lecture</a>
+            </div>
+        </div>
+
+        <!-- Lecture 03 -->
+        <div class="lecture-card">
+            <img src="notes/03_bayesian_estimation.html" alt="Lecture 03: Bayesian Parametric Estimation" onerror="this.src='https://via.placeholder.com/400x180?text=Bayesian+Estimation'">
+            <div class="lecture-content">
+                <h3>Lecture 03: Bayesian Parametric Estimation</h3>
+                <p>Bayesian probabilities, classification applications, and updating beliefs with evidence.</p>
+                <a href="notes/03_bayesian_estimation.html" class="lecture-btn">View Lecture</a>
+            </div>
+        </div>
+
+        <!-- Lecture 04 -->
+        <div class="lecture-card">
+            <img src="notes/04_linear_discriminant.html" alt="Lecture 04: Linear Discriminant and Kernel Machines" onerror="this.src='https://via.placeholder.com/400x180?text=Linear+Discriminant'">
+            <div class="lecture-content">
+                <h3>Lecture 04: Linear Discriminant and Kernel Machines</h3>
+                <p>Discriminant-based classification, linear models, and kernel methods for nonlinear separation.</p>
+                <a href="notes/04_linear_discriminant.html" class="lecture-btn">View Lecture</a>
+            </div>
+        </div>
+
+        <!-- Lecture 05 -->
+        <div class="lecture-card">
+            <img src="https://via.placeholder.com/400x180?text=PCA" alt="Lecture 05: Dimensionality Reduction with PCA">
+            <div class="lecture-content">
+                <h3>Lecture 05: Dimensionality Reduction with PCA</h3>
+                <p>Feature selection vs extraction, principal component analysis, and variance maximization.</p>
+                <a href="notes/05_pca.html" class="lecture-btn">View Lecture</a>
+            </div>
+        </div>
+
+        <!-- Lecture 06 -->
+        <div class="lecture-card">
+            <img src="https://via.placeholder.com/400x180?text=Clustering" alt="Lecture 06: Clustering">
+            <div class="lecture-content">
+                <h3>Lecture 06: Clustering</h3>
+                <p>Parametric vs nonparametric clustering, mixture models, and density estimation techniques.</p>
+                <a href="notes/06_clustering.html" class="lecture-btn">View Lecture</a>
+            </div>
+        </div>
+
+        <!-- Lecture 07 -->
+        <div class="lecture-card">
+            <img src="https://via.placeholder.com/400x180?text=Decision+Trees" alt="Lecture 07: Decision Trees">
+            <div class="lecture-content">
+                <h3>Lecture 07: Decision Trees</h3>
+                <p>Hierarchical models, recursive splitting, entropy, and information gain for decision making.</p>
+                <a href="notes/07_decision_trees.html" class="lecture-btn">View Lecture</a>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p style="text-align: center; margin-top: 3rem; color: #6c757d; font-size: 0.9rem;">
+            Machine Learning Course Notes • Hanyang University ERICA • Fall 2026
+        </p>
+    </footer>
+
+    <script>
+        // Dark mode toggle
+        document.getElementById('theme-toggle').addEventListener('click', function() {
+            document.documentElement.setAttribute('data-theme',
+                document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        });
+
+        // Update progress bar based on completed lectures
+        // For now, we'll hardcode it since all lectures 01 through 07 are done
+        // In a real implementation, this would check which lectures exist/completed
+        document.getElementById('progress-fill').style.width = '100%';
+        document.getElementById('progress-fill').textContent = '100%';
+    </script>
+</body>
+</html>

@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecture 05: Dimensionality Reduction with PCA</title>
+    <!-- MathJax 3 for math rendering -->
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']],
+          processEscapes: true,
+          processEnvironments: true
+        }
+      };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script"></script>
+    <style>
+        :root {
+            --bg-light: #f8f9fa;
+            --bg-dark: #212529;
+            --text-light: #212529;
+            --text-dark: #f8f9fa;
+            --primary: #0d6efd;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-light: #212529;
+            --bg-dark: #f8f9fa;
+            --text-light: #f8f9fa;
+            --text-dark: #212529;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--text-light);
+            background-color: var(--bg-light);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            color: #6c757d;
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .formula {
+            background-color: rgba(13, 112, 253, 0.1);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .symbols {
+            margin: 1.5rem 0;
+        }
+
+        .symbols h3 {
+            margin-bottom: 0.5rem;
+            color: #6c757d;
+        }
+
+        .symbols ul {
+            line-height: 1.8;
+        }
+
+        .example {
+            background-color: #e9ecef;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+        }
+
+        .experiment-link, .videos, .practice-questions, .cheat-sheet {
+            background-color: #e9ecef;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+        }
+
+        .watch-out {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+        }
+
+        .watch-out h3 {
+            color: #856404;
+            margin-top: 0;
+        }
+
+        details {
+            margin: 1rem 0;
+        }
+
+        summary {
+            cursor: pointer;
+            padding: 0.5rem;
+            background-color: #dee2e6;
+            border-radius: var(--border-radius);
+        }
+
+        details[open] summary {
+            background-color: #cbd3da;
+        }
+
+        details > * {
+            margin: 0.5rem 1rem;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .stat {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .dark-mode-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .dark-mode-toggle button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--border-radius);
+            background-color: var(--primary);
+            color: white;
+            cursor: pointer;
+        }
+
+        .dark-mode-toggle button:hover {
+            background-color: #0b5ed7;
+        }
+
+        @media (max-width: 768px) {
+            .stats {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        @media print {
+            .dark-mode-toggle, .stats, .progress-section {
+                display: none !important;
+            }
+            body {
+                max-width: none;
+                margin: 0;
+                padding: 15mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dark-mode-toggle">
+        <button id="theme-toggle">🌓 Toggle Dark Mode</button>
+    </div>
+
+    <header>
+        <h1>Lecture 05: Dimensionality Reduction with PCA</h1>
+        <p class="subtitle">Feature Extraction, Data Compression, and Visualization Techniques</p>
+    </header>
+
+    <div class="section">
+        <h2>Big Idea</h2>
+        <p>Principal Component Analysis (PCA) finds the directions of maximum variance in high-dimensional data and projects it onto a lower-dimensional subspace, preserving as much information as possible. It's the most widely used technique for dimensionality reduction and feature extraction in machine learning.</p>
+    </div>
+
+    <div class="section">
+        <h2>Everyday Metaphor</h2>
+        <blockquote>
+            💡 **PCA = finding the best angle to view a shadow**: Imagine a 3D object casting a shadow on a 2D wall. By changing the angle of the light, you can make the shadow show different aspects of the object. PCA finds the 'light angle' that shows the most informative 2D shadow of your high-dimensional data.
+        </blockquote>
+        <blockquote>
+            **High-dimensional data = complex object with many features**: Each feature is like a dimension describing the object (color, texture, size, weight, etc.).
+        </blockquote>
+        <blockquote>
+            **Principal components = optimal viewing angles**: The directions that capture the most variance in the data, like finding the best lighting to reveal the object's true shape.
+        </blockquote>
+    </div>
+
+    <div class="section">
+        <h2>Why It Matters</h2>
+        <ul>
+            <li>Reduces computational complexity by removing redundant features</li>
+            <li>Helps visualize high-dimensional data in 2D or 3D</li>
+            <li>Removes noise by focusing on directions with maximum signal</li>
+            <li>Preprocessing step for many machine learning algorithms</li>
+            <li>Essential for handling the 'curse of dimensionality' in modern datasets</li>
+            <li>Enables efficient storage and transmission of large datasets</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Formulas</h2>
+
+        <div class="formula">
+            <p>$$\\mathbf{X}_{centered} = \\mathbf{X} - \\frac{1}{n}\\mathbf{1}\\mathbf{1}^T\\mathbf{X}$$</p>
+            <p><strong>Data centering</strong></p>
+        </div>
+
+        <div class="formula">
+            <p>$$\\mathbf{\\Sigma} = \\frac{1}{n-1} \\mathbf{X}_{centered}^T \\mathbf{X}_{centered}$$</p>
+            <p><strong>Covariance matrix</strong></p>
+        </div>
+
+        <div class="formula">
+            <p>$$\\mathbf{\\Sigma} \\mathbf{v}_i = \\lambda_i \\mathbf{v}_i$$</p>
+            <p><strong>Eigenvalue decomposition</strong></p>
+        </div>
+
+        <div class="symbols">
+            <h3>What each symbol means:</h3>
+            <ul>
+                <li><strong>\\mathbf{X}</strong>: Original data matrix (n samples × d features)</li>
+                <li><strong>\\mathbf{1}</strong>: Vector of ones (for centering)</li>
+                <li><strong>\\mathbf{X}_{centered}</strong>: Data with zero mean</li>
+                <li><strong>\\mathbf{\\Sigma}</strong>: Covariance matrix (d × d)</li>
+                <li><strong>\\mathbf{v}_i</strong>: Eigenvector (principal component)</li>
+                <li><strong>\\lambda_i</strong>: Eigenvalue (variance explained by PC i)</li>
+                <li><strong>n</strong>: Number of samples</li>
+                <li><strong>d</strong>: Number of features</li>
+            </ul>
+        </div>
+
+        <div class="formula">
+            <p>$$\\mathbf{Z} = \\mathbf{X}_{centered} \\mathbf{V}_k$$</p>
+            <p><strong>Projection onto k principal components</strong></p>
+        </div>
+
+        <div class="symbols">
+            <h3>What each symbol means in the projection:</h3>
+            <ul>
+                <li><strong>\\mathbf{V}_k</strong>: Matrix of first k eigenvectors (d × k)</li>
+                <li><strong>\\mathbf{Z}</strong>: Projected data (n × k)</li>
+                <li><strong>k</strong>: Number of principal components kept</li>
+                <li>The columns of \\mathbf{V}_k are the principal components</li>
+            </ul>
+        </div>
+
+        <div class="formula">
+            <p>$$\\mathbf{X}_{approx} = \\mathbf{Z} \\mathbf{V}_k^T + \\mathbf{\\bar{x}}$$</p>
+            <p><strong>Data reconstruction</strong></p>
+        </div>
+
+        <div class="symbols">
+            <h3>What each symbol means in reconstruction:</h3>
+            <ul>
+                <li><strong>\\mathbf{X}_{approx}</strong>: Reconstructed data (n × d)</li>
+                <li><strong>\\mathbf{\\bar{x}}</strong>: Mean vector added back for reconstruction</li>
+                <li>Reconstruction error measures information loss</li>
+            </ul>
+        </div>
+
+        <div class="formula">
+            <p>$$\\text{Variance explained by PC } i: \\quad \\frac{\\lambda_i}{\\sum_{j=1}^d \\lambda_j}$$</p>
+            <p><strong>Individual component importance</strong></p>
+        </div>
+
+        <div class="formula">
+            <p>$$\\text{Cumulative variance: } \\quad \\frac{\\sum_{i=1}^k \\lambda_i}{\\sum_{j=1}^d \\lambda_j}$$</p>
+            <p><strong>Total variance retained</strong></p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Worked Example by Hand</h2>
+        <div class="example">
+            <p>🧮 Simple PCA: Reduce this 2D dataset to 1 dimension: [2,2], [2,4], [3,5], [4,4], [5,3], [5,5], [6,4]</p>
+
+            <h3>Step 1: Center the data</h3>
+            <p>Calculate mean of each feature:</p>
+            <p>- Mean of x₁: (2+2+3+4+5+5+6)/7 = 27/7 ≈ 3.86</p>
+            <p>- Mean of x₂: (2+4+5+4+3+5+4)/7 = 27/7 ≈ 3.86</p>
+            <p>Centered data (subtract means):</p>
+            <p>[-1.86, -1.86], [-1.86, 0.14], [-0.86, 1.14], [0.14, 0.14], [1.14, -0.86], [1.14, 1.14], [2.14, 0.14]</p>
+
+            <h3>Step 2: Compute covariance matrix</h3>
+            <p>$$\\mathbf{\\Sigma} = \\frac{1}{n-1} \\sum_{i=1}^n (\\mathbf{x}_i - \\mathbf{\\bar{x}})(\\mathbf{x}_i - \\mathbf{\\bar{x}})^T$$</p>
+            <p>After calculation:</p>
+            <p>$$\\mathbf{\\Sigma} = \\begin{bmatrix} 2.24 & 0.76 \\\\ 0.76 & 1.81 \\end{bmatrix}$$</p>
+
+            <h3>Step 3: Find eigenvalues and eigenvectors</h3>
+            <p>$$\\det(\\mathbf{\\Sigma} - \\lambda\\mathbf{I}) = 0$$</p>
+            <p>$$(2.24 - \\lambda)(1.81 - \\lambda) - (0.76)^2 = 0$$</p>
+            <p>$$\\lambda^2 - 4.05\\lambda + 3.43 = 0$$</p>
+            <p>Solving: $\\lambda_1 ≈ 2.92, \\lambda_2 ≈ 1.13$</p>
+            <p>Eigenvectors:</p>
+            <p>- For $\\lambda_1 = 2.92$: $\\mathbf{v}_1 ≈ [0.81, 0.59]$ (first principal component)</p>
+            <p>- For $\\lambda_2 = 1.13$: $\\mathbf{v}_2 ≈ [-0.59, 0.81]$ (second principal component)</p>
+
+            <h3>Step 4: Project onto first principal component</h3>
+            <p>Projection: $z = \\mathbf{x}_{centered} \\cdot \\mathbf{v}_1$</p>
+            <p>Example: For point [2,2] (centered [-1.86, -1.86]):</p>
+            <p>$$z = [-1.86, -1.86] \\cdot [0.81, 0.59] = (-1.86×0.81) + (-1.86×0.59) ≈ -2.59$$</p>
+
+            <h3>Step 5: Calculate variance explained</h3>
+            <p>- PC1 explains: $2.92/(2.92+1.13) ≈ 2.92/4.05 ≈ 72.1%$</p>
+            <p>- PC2 explains: $1.13/(2.92+1.13) ≈ 1.13/4.05 ≈ 27.9%$</p>
+            <p><em>Answer: The first principal component captures about 72% of the variance, so we can reduce from 2D to 1D while losing only about 28% of the information.</em></p>
+        </div>
+    </div>
+
+    <div class="experiment-link">
+        <h2>Experiment Link</h2>
+        <p>🔬 Run <strong>Section 2: PCA Experiment</strong> in the Jupyter notebook to explore how PCA works on different datasets and understand the trade-offs in dimensionality reduction.</p>
+        <p>This section will include:</p>
+        <ul>
+            <li>PCA on various synthetic datasets (correlated, uncorrelated, high-dimensional)</li>
+            <li>Visualization of data before and after PCA transformation</li>
+            <li>Analysis of explained variance vs number of components</li>
+            <li>Reconstruction error analysis</li>
+            <li>Comparison with other dimensionality reduction techniques (t-SNE, LDA)</li>
+            <li>Discussion of when to use PCA vs other methods</li>
+        </ul>
+    </div>
+
+    <div class="watch-out">
+        <h3>Watch Out: Common Mistakes & Exam Traps</h3>
+        <ul>
+            <li><strong>Forgetting to standardize data:</strong> PCA is sensitive to scale; features with larger variances will dominate the first principal components.</li>
+            <li><strong>Misinterpreting principal components:</strong> PCs are linear combinations of original features, not necessarily interpretable as individual features.</li>
+            <li><strong>Choosing too few components:</strong> While dimensionality reduction is good, too few components can lose important information.</li>
+            <li><strong>Confusing PCA with factor analysis:</strong> Both reduce dimensions but have different assumptions and goals (PCA maximizes variance, factor analysis models latent variables).</li>
+            <li><strong>Assuming PCs are always ordered by importance:</strong> While PCs are ordered by explained variance, sometimes later PCs may be more interpretable or meaningful for specific applications.</li>
+            <li><strong>Overlooking that PCA is linear:</strong> PCA cannot capture nonlinear relationships; consider Kernel PCA for nonlinear patterns.</li>
+            <li><strong>Using PCA on categorical data without proper encoding:</strong> PCA assumes continuous, numeric data.</li>
+            <li><strong>Ignoring the reconstruction error:</strong> Always check how well you can reconstruct original data from the reduced representation.</li>
+        </ul>
+    </div>
+
+    <div class="videos">
+        <h2>Videos to Watch</h2>
+        <p>📺 <strong>Recommended video searches:</strong></p>
+        <ol>
+            <li><strong>Principal Component Analysis (PCA) Clearly Explained</strong><br>
+                Search: https://www.youtube.com/results?search_query=Principal+Component+Analysis+PCA+explained<br>
+                Watch for: Intuitive explanation of what PCA does and why it works</li>
+            <li><strong>StatQuest: PCA main ideas in only 5 minutes!!!</strong><br>
+                Search: https://www.youtube.com/results?search_query=StatQuest+PCA+main+ideas<br>
+                Watch for: Quick, clear explanation of PCA concepts</li>
+            <li><strong>Linear Algebra for Machine Learning: PCA</strong><br>
+                Search: https://www.youtube.com/results?search_query=linear+algebra+PCA+machine+learning<br>
+                Watch for: Mathematical derivation and deeper understanding of PCA</li>
+        </ol>
+    </div>
+
+    <div class="practice-questions">
+        <h2>Practice Questions</h2>
+        <p>❓ Try to solve these yourself first, then check the answers below!</p>
+
+        <details>
+            <summary>Question 1 (Concept): What is the main goal of PCA?</summary>
+            <p>The main goal of PCA is to reduce the dimensionality of data while preserving as much of the original variance as possible by projecting onto orthogonal directions of maximum variance.</p>
+        </details>
+
+        <details>
+            <summary>Question 2 (Concept): Why is it important to standardize data before applying PCA?</summary>
+            <p>PCA is sensitive to the scale of features because it seeks directions of maximum variance. Features with larger scales will have larger variances and dominate the first principal components, leading to biased results. Standardization ensures all features contribute equally.</p>
+        </details>
+
+        <details>
+            <summary>Question 3 (Calculation): Given the covariance matrix [[4, 2], [2, 3]], what are the eigenvalues?</summary>
+            <p>Solve det([[4-λ, 2], [2, 3-λ]]) = 0<br>(4-λ)(3-λ) - 4 = 0<br>λ² - 7λ + 8 = 0<br>Using quadratic formula: λ = (7 ± √(49-32))/2 = (7 ± √17)/2<br>λ₁ ≈ (7 + 4.12)/2 ≈ 5.56, λ₂ ≈ (7 - 4.12)/2 ≈ 1.44</p>
+        </details>
+
+        <details>
+            <summary>Question 4 (Concept): When would you choose to keep only the first principal component?</summary>
+            <p>Choose only the first PC when: it explains a large majority of the variance (e.g., >90%), you need extreme dimensionality reduction for visualization or computational efficiency, or the first PC captures the dominant pattern in your data while later PCs represent noise.</p>
+        </details>
+
+        <details>
+            <summary>Question 5 (Explain it simply): What does it mean when we say principal components are 'orthogonal'?</summary>
+            <p>Orthogonal means the principal components are perpendicular to each other in feature space. Mathematically, their dot product is zero. This ensures they capture independent aspects of the variance in the data.</p>
+        </details>
+    </div>
+
+    <div class="cheat-sheet">
+        <h2>Cheat Sheet Draft</h2>
+        <p>📝 This section is optimized for printing - it should fit approximately 1/7 of an A4 page when printed.</p>
+
+        <div class="formula">
+            <p>$$\\mathbf{X}_{centered} = \\mathbf{X} - \\frac{1}{n}\\mathbf{1}\\mathbf{1}^T\\mathbf{X}$$</p>
+            <p><strong>Data centering</strong></p>
+        </div>
+
+        <div class="formula">
+            <p>$$\\mathbf{\\Sigma} = \\frac{1}{n-1} \\mathbf{X}_{centered}^T \\mathbf{X}_{centered}$$</p>
+            <p><strong>Covariance matrix</strong></p>
+        </div>
+
+        <div class="formula">
+            <p>$$\\mathbf{\\Sigma} \\mathbf{v}_i = \\lambda_i \\mathbf{v}_i$$</p>
+            <p><strong>Eigenvalue decomposition</strong></p>
+        </div>
+
+        <div class="formula">
+            <p>$$\\mathbf{Z} = \\mathbf{X}_{centered} \\mathbf{V}_k$$</p>
+            <p><strong>Projection onto k components</strong></p>
+        </div>
+
+        <h3>Key Definitions</h3>
+        <ul>
+            <li><strong>Principal Component:</strong> A linear combination of original features that captures maximum variance</li>
+            <li><strong>Explained Variance Ratio:</strong> Proportion of total variance explained by each principal component</li>
+            <li><strong>Scree Plot:</strong> Plot of eigenvalues or explained variance vs. component number</li>
+            <li><strong>Loading:</strong> Correlation between original features and principal components</li>
+            <li><strong>Score:</strong> The projected data values in the principal component space</li>
+            <li><strong>Singular Value Decomposition (SVD):</strong> Alternative method to compute PCA</li>
+        </ul>
+
+        <h3>Common Mistakes to Avoid</h3>
+        <ul>
+            <li>Forgetting to standardize data before PCA (unless features are already comparable)</li>
+            <li>Misinterpreting principal components as original features</li>
+            <li>Choosing number of components without examining explained variance</li>
+            <li>Assuming PCA removes noise (it actually preserves directions of maximum variance, which may include noise)</li>
+            <li>Confusing PCA with other dimensionality reduction techniques (LDA, t-SNE, etc.)</li>
+            <li>Overlooking that PCA creates linear combinations (may not be interpretable)</li>
+            <li>Ignoring reconstruction error when evaluating PCA quality</li>
+            <li>Applying PCA to categorical data without proper encoding</li>
+        </ul>
+    </div>
+
+    <script>
+        // Dark mode toggle
+        document.getElementById('theme-toggle').addEventListener('click', function() {
+            document.documentElement.setAttribute('data-theme',
+                document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        });
+    </script>
+</body>
+</html>

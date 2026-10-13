@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecture 06: Clustering</title>
+    <!-- MathJax 3 for math rendering -->
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']],
+          processEscapes: true,
+          processEnvironments: true
+        }
+      };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script"></script>
+    <style>
+        :root {
+            --bg-light: #f8f9fa;
+            --bg-dark: #212529;
+            --text-light: #212529;
+            --text-dark: #f8f9fa;
+            --primary: #0d6efd;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-light: #212529;
+            --bg-dark: #f8f9fa;
+            --text-light: #f8f9fa;
+            --text-dark: #212529;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--text-light);
+            background-color: var(--bg-light);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            color: #6c757d;
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .formula {
+            background-color: rgba(13, 112, 253, 0.1);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .symbols {
+            margin: 1.5rem 0;
+        }
+
+        .symbols h3 {
+            margin-bottom: 0.5rem;
+            color: #6c757d;
+        }
+
+        .symbols ul {
+            line-height: 1.8;
+        }
+
+        .example {
+            background-color: #e9ecef;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+        }
+
+        .experiment-link, .videos, .practice-questions, .cheat-sheet {
+            background-color: #e9ecef;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+        }
+
+        .watch-out {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+        }
+
+        .watch-out h3 {
+            color: #856404;
+            margin-top: 0;
+        }
+
+        details {
+            margin: 1rem 0;
+        }
+
+        summary {
+            cursor: pointer;
+            padding: 0.5rem;
+            background-color: #dee2e6;
+            border-radius: var(--border-radius);
+        }
+
+        details[open] summary {
+            background-color: #cbd3da;
+        }
+
+        details > * {
+            margin: 0.5rem 1rem;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .stat {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .dark-mode-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .dark-mode-toggle button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--border-radius);
+            background-color: var(--primary);
+            color: white;
+            cursor: pointer;
+        }
+
+        .dark-mode-toggle button:hover {
+            background-color: #0b5ed7;
+        }
+
+        @media (max-width: 768px) {
+            .stats {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        @media print {
+            .dark-mode-toggle {
+                display: none !important;
+            }
+            body {
+                max-width: none;
+                margin: 0;
+                padding: 15mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dark-mode-toggle">
+        <button id="theme-toggle">🌓 Toggle Dark Mode</button>
+    </div>
+
+    <header>
+        <h1>Lecture 06: Clustering</h1>
+        <p class="subtitle">Unsupervised learning: finding hidden patterns in unlabeled data</p>
+    </header>
+
+    <div class="section">
+        <h2>Big Idea</h2>
+        <p>Clustering groups similar data points together without predefined labels, revealing inherent structure in unlabeled data through similarity measures. Unlike supervised learning, clustering discovers patterns organically, making it invaluable for exploratory data analysis and preprocessing.</p>
+    </div>
+
+    <div class="section">
+        <h2>Everyday Metaphor</h2>
+        <blockquote>
+            💡 **Clustering = organizing a messy desk**: Imagine your desk is covered with various objects. Clustering is like grouping similar items together - pens with pens, papers with papers, etc. - without being told what categories to use.
+        </blockquote>
+        <blockquote>
+            **Similarity Measure = how we decide what's 'like' what**: The rule we use to determine if two items belong together (e.g., same color, same function, same size).
+        </blockquote>
+        <blockquote>
+            **Cluster Centroid = the representative of a group**: The average or most typical item in a cluster that represents the group's characteristics.
+        </blockquote>
+    </div>
+
+    <div class="section">
+        <h2>Why It Matters</h2>
+        <ul>
+            <li>Discovers hidden patterns in unlabeled data</li>
+            <li>Useful for customer segmentation, image compression, anomaly detection</li>
+            <li>Prepares data for other machine learning algorithms</li>
+            <li>Helps understand data structure before supervised learning</li>
+            <li>Essential for exploratory data analysis</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Formulas</h2>
+
+        <div class="formula">
+            <p>$$d(\\mathbf{x}, \\mathbf{y}) = \\sqrt{\\sum_{i=1}^n (x_i - y_i)^2}$$</p>
+            <p><strong>Euclidean distance</strong></p>
+        </div>
+
+        <div class="symbols">
+            <h3>What each symbol means in Euclidean distance:</h3>
+            <ul>
+                <li><strong>\\mathbf{x}, \\mathbf{y}</strong>: Data points in n-dimensional space</li>
+                <li><strong>x_i, y_i</strong>: Individual features/coordinates</li>
+                <li><strong>n</strong>: Number of dimensions/features</li>
+                <li><strong>\\sqrt{\\cdot}</strong>: Square root function</li>
+                <li><strong>\\sum_{i=1}^n</strong>: Summation over all dimensions</li>
+            </ul>
+        </div>
+
+        <div class="formula">
+            <p>$$\\arg\\min_{\\mathbf{S}} \\sum_{i=1}^k \\sum_{\\mathbf{x} \\in S_i} \\|\\mathbf{x} - \\boldsymbol{\\mu}_i\\|^2$$</p>
+            <p><strong>K-means objective function</strong></p>
+        </div>
+
+        <div class="symbols">
+            <h3>What each symbol means in the K-means objective:</h3>
+            <ul>
+                <li><strong>\\mathbf{S} = {S_1, S_2, ..., S_k}</strong>: Partition of data into k clusters</li>
+                <li><strong>\\boldsymbol{\\mu}_i</strong>: Centroid (mean) of cluster S_i</li>
+                <li><strong>\\|\\mathbf{x} - \\boldsymbol{\\mu}_i\\|</strong>: Euclidean distance between point \\mathbf{x} and centroid \\boldsymbol{\\mu}_i</li>
+                <li><strong>k</strong>: Number of clusters (chosen in advance)</li>
+                <li><strong>\\arg\\min</strong>: Argument that minimizes the function</li>
+            </ul>
+        </div>
+
+        <div class="formula">
+            <p>$$p(\\mathbf{x}) = \\sum_{k=1}^K \\phi_k \\mathcal{N}(\\mathbf{x} | \\boldsymbol{\\mu}_k, \\boldsymbol{\\Sigma}_k)$$</p>
+            <p><strong>Gaussian Mixture Model</strong></p>
+        </div>
+
+        <div class="symbols">
+            <h3>What each symbol means in GMM:</h3>
+            <ul>
+                <li><strong>p(\\mathbf{x})</strong>: Probability density of observing point \\mathbf{x}</li>
+                <li><strong>K</strong>: Number of mixture components (clusters)</li>
+                <li><strong>\\phi_k</strong>: Mixing coefficient for component k (\\phi_k ≥ 0, \\sum \\phi_k = 1)</li>
+                <li><strong>\\mathcal{N}(\\mathbf{x} | \\boldsymbol{\\mu}_k, \\boldsymbol{\\Sigma}_k)</strong>: Gaussian distribution with mean \\boldsymbol{\\mu}_k and covariance \\boldsymbol{\\Sigma}_k</li>
+                <li><strong>\\boldsymbol{\\mu}_k</strong>: Mean vector of component k</li>
+                <li><strong>\\boldsymbol{\\Sigma}_k</strong>: Covariance matrix of component k</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Worked Example by Hand</h2>
+        <div class="example">
+            <p>🧮 Simple clustering: Group these 2D points into 2 clusters: [1,1], [1,2], [2,1], [8,8], [8,9], [9,8]</p>
+
+            <h3>Step 1: Visualize the data</h3>
+            <p>Points form two obvious groups: </p>
+            <p>Group 1: (1,1), (1,2), (2,1) clustered around (1,1)</p>
+            <p>Group 2: (8,8), (8,9), (9,8) clustered around (8,8)</p>
+
+            <h3>Step 2: Apply K-Means with K=2</h3>
+            <p><strong>Initialization</strong>: Randomly choose 2 centroids</p>
+            <p>Let's say we pick C1 = [1,1] and C2 = [8,8]</p>
+
+            <h3>Step 3: Assignment Step</h3>
+            <p>- Distance from [1,1] to C1: 0, to C2: √98 ≈ 9.9 → Assign to C1</p>
+            <p>- Distance from [1,2] to C1: 1, to C2: √85 ≈ 9.2 → Assign to C1</p>
+            <p>- Distance from [2,1] to C1: 1, to C2: √85 ≈ 9.2 → Assign to C1</p>
+            <p>- Distance from [8,8] to C1: √98 ≈ 9.9, to C2: 0 → Assign to C2</p>
+            <p>- Distance from [8,9] to C1: √85 ≈ 9.2, to C2: 1 → Assign to C2</p>
+            <p>- Distance from [9,8] to C1: √85 ≈ 9.2, to C2: 1 → Assign to C2</p>
+
+            <h3>Step 4: Update Step</h3>
+            <p>- New C1 = mean([1,1], [1,2], [2,1]) = [4/3, 4/3] ≈ [1.33, 1.33]</p>
+            <p>- New C2 = mean([8,8], [8,9], [9,8]) = [25/3, 25/3] ≈ [8.33, 8.33]</p>
+
+            <h3>Step 5: Repeat Assignment</h3>
+            <p>All points still assign to same clusters with updated centroids</p>
+
+            <h3>Step 6: Convergence</h3>
+            <p>Centroids no longer change significantly</p>
+
+            <p><strong>Final Clusters:</strong></p>
+            <p>- Cluster 1: [1,1], [1,2], [2,1] (Centroid ≈ [1.33, 1.33])</p>
+            <p>- Cluster 2: [8,8], [8,9], [9,8] (Centroid ≈ [8.33, 8.33])</p>
+
+            <p><em>Answer: The algorithm correctly identifies the two natural groups in the data.</em>
+        </div>
+    </div>
+
+    <div class="experiment-link">
+        <h2>Experiment Link</h2>
+        <p>🔬 Run <strong>Section 2: Clustering Comparison Experiment</strong> in the Jupyter notebook to compare different clustering algorithms on various datasets and understand their strengths and weaknesses.</p>
+        <p>This section will include:</p>
+        <ul>
+            <li>Comparison of K-Means, Hierarchical, DBSCAN, and GMM on different dataset types</li>
+            <li>Evaluation using internal validity metrics (silhouette score, Calinski-Harabasz)</li>
+            <li>Visualization of clustering results and decision boundaries</li>
+            <li>Analysis of algorithm sensitivity to parameters</li>
+            <li>Discussion of when to use each algorithm</li>
+        </ul>
+    </div>
+
+    <div class="watch-out">
+        <h3>Watch Out: Common Mistakes & Exam Traps</h3>
+        <ul>
+            <li><strong>Assuming K-means finds globally optimal solution:</strong> K-means converges to local optimum; results depend on initialization.</li>
+            <li><strong>Ignoring feature scaling:</strong> Distance-based clustering is sensitive to feature scales; always standardize features first.</li>
+            <li><strong>Choosing wrong distance metric:</strong> Euclidean distance assumes spherical clusters; use Manhattan for high-dimensional sparse data, cosine for text.</li>
+            <li><strong>Misinterpreting hierarchical clustering dendrogram:</strong> Vertical height represents distance/dissimilarity, not time or iteration count.</li>
+            <li><strong>Overlooking DBSCAN parameter sensitivity:</strong> Results heavily depend on eps and minPts; use k-distance graph to choose eps.</li>
+            <li><strong>Assuming all points must belong to a cluster:</strong> DBSCAN and other methods can identify outliers.</li>
+            <li><strong>Using accuracy to evaluate clustering:</strong> Accuracy requires true labels; use internal metrics like silhouette score when true labels unknown.</li>
+            <li><strong>Ignoring the curse of dimensionality:</strong> Distance metrics become less meaningful in very high dimensions; consider dimensionality reduction first.</li>
+        </ul>
+    </div>
+
+    <div class="videos">
+        <h2>Videos to Watch</h2>
+        <p>📺 <strong>Recommended video searches:</strong></p>
+        <ol>
+            <li><strong>Clustering Algorithms Explained</strong><br>
+                Search: https://www.youtube.com/results?search_query=clustering+algorithms+explained<br>
+                Watch for: Clear explanation of K-means, hierarchical clustering, DBSCAN</li>
+            <li><strong>StatQuest: K-means Clustering</strong><br>
+                Search: https://www.youtube.com/results?search_query=StatQuest+K-means+Clustering<br>
+                Watch for: Intuitive breakdown of how K-means works and when to use it</li>
+            <li><strong>Machine Learning Zoomcamp: Clustering</strong><br>
+                Search: https://www.youtube.com/results?search_query=clustering+machine+learning+zoomcamp<br>
+                Watch for: Practical implementation and real-world examples</li>
+        </ol>
+    </div>
+
+    <div class="practice-questions">
+        <h2>Practice Questions</h2>
+        <p>❓ Try to solve these yourself first, then check the answers below!</p>
+
+        <details>
+            <summary>Question 1 (Concept): What is the main difference between partitioning and hierarchical clustering?</summary>
+            <p>Partitioning clustering (like K-means) divides data into non-overlapping clusters without any hierarchical structure. Hierarchical clustering creates a tree of clusters (dendrogram) showing relationships between clusters at different levels of granularity.</p>
+        </details>
+
+        <details>
+            <summary>Question 2 (Concept): Why is feature scaling important before clustering?</summary>
+            <p>Clustering algorithms based on distance metrics are sensitive to the scale of features. Features with larger scales will dominate the distance calculation, leading to biased clusters. Standardization ensures all features contribute equally to distance computations.</p>
+        </details>
+
+        <details>
+            <summary>Question 3 (Calculation): Given two points A(2,3) and B(5,7), what is the Euclidean distance between them?</summary>
+            <p>d(A,B) = √[(5-2)² + (7-3)²] = √[3² + 4²] = √[9 + 16] = √25 = 5</p>
+        </details>
+
+        <details>
+            <summary>Question 4 (Concept): When would you prefer DBSCAN over K-means?</summary>
+            <p>Prefer DBSCAN when: you want to find arbitrarily shaped clusters, you expect noise/outliers in your data, you don't want to specify the number of clusters in advance, or your clusters have varying densities.</p>
+        </details>
+
+        <details>
+            <summary>Question 5 (Explain it simply): What does the 'silhouette score' measure in clustering evaluation?</summary>
+            <p>The silhouette score measures how similar a point is to its own cluster compared to other clusters. It ranges from -1 to 1, where high values indicate good clustering (points well-matched to their own cluster and poorly matched to neighboring clusters).</p>
+        </details>
+    </div>
+
+    <div class="cheat-sheet">
+        <h2>Cheat Sheet Draft</h2>
+        <p>📝 This section is optimized for printing - it should fit approximately 1/7 of an A4 page when printed.</p>
+
+        <div class="formula">
+            <p>$$d(\\mathbf{x}, \\mathbf{y}) = \\sqrt{\\sum_{i=1}^n (x_i - y_i)^2}$$</p>
+            <p><strong>Euclidean distance</strong></p>
+        </div>
+
+        <div class="formula">
+            <p>$$\\arg\\min_{\\mathbf{S}} \\sum_{i=1}^k \\sum_{\\mathbf{x} \\in S_i} \\|\\mathbf{x} - \\boldsymbol{\\mu}_i\\|^2$$</p>
+            <p><strong>K-means objective function</strong></p>
+        </div>
+
+        <div class="formula">
+            <p>$$p(\\mathbf{x}) = \\sum_{k=1}^K \\phi_k \\mathcal{N}(\\mathbf{x} | \\boldsymbol{\\mu}_k, \\boldsymbol{\\Sigma}_k)$$</p>
+            <p><strong>Gaussian Mixture Model</strong></p>
+        </div>
+
+        <h3>Key Definitions</h3>
+        <ul>
+            <li><strong>Centroid:</strong> The mean position of all points in a cluster</li>
+            <li><strong>Inertia:</strong> Sum of squared distances of samples to their closest cluster center</li>
+            <li><strong>Linkage Criteria:</strong> Method for calculating distance between clusters in hierarchical clustering</li>
+            <li><strong>Core Point (DBSCAN):</strong> A point with at least minPts neighbors within distance eps</li>
+            <li><strong>Noise Point (DBSCAN):</strong> A point that is neither a core point nor reachable from a core point</li>
+            <li><strong>Silhouette Score:</strong> Measure of how similar an object is to its own cluster vs other clusters</li>
+        </ul>
+
+        <h3>Common Mistakes to Avoid</h3>
+        <ul>
+            <li>Assuming K-means finds globally optimal solution (finds local optimum)</li>
+            <li>Ignoring feature scaling before distance-based clustering</li>
+            <li>Choosing wrong number of clusters K without validation</li>
+            <li>Misinterpreting hierarchical clustering dendrogram heights</li>
+            <li>Overlooking DBSCAN's sensitivity to eps and minPts parameters</li>
+            <li>Assuming all clustering points must belong to a cluster (algorithms can identify outliers)</li>
+            <li>Using accuracy to evaluate clustering without ground truth labels</li>
+            <li>Ignoring the curse of dimensionality in high-dimensional feature spaces</li>
+        </ul>
+    </div>
+
+    <script>
+        // Dark mode toggle
+        document.getElementById('theme-toggle').addEventListener('click', function() {
+            document.documentElement.setAttribute('data-theme',
+                document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecture 01: Mathematics Primer - Matrix Basics</title>
+    <!-- MathJax 3 for math rendering -->
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']],
+          processEscapes: true,
+          processEnvironments: true
+        }
+      };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script"></script>
+    <style>
+        :root {
+            --bg-light: #f8f9fa;
+            --bg-dark: #212529;
+            --text-light: #212529;
+            --text-dark: #f8f9fa;
+            --primary: #0d6efd;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-light: #212529;
+            --bg-dark: #f8f9fa;
+            --text-light: #f8f9fa;
+            --text-dark: #212529;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--text-light);
+            background-color: var(--bg-light);
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1, h2, h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar {
+            position: sticky;
+            top: 20px;
+            width: 200px;
+            height: fit-content;
+        }
+
+        .toc-link {
+            display: block;
+            padding: 8px 12px;
+            margin: 4px 0;
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            color: var(--text-light);
+            background-color: rgba(13, 111, 253, 0.1);
+            border-left: 3px solid var(--primary);
+        }
+
+        .toc-link.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .content-column {
+            margin-left: 220px;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .callout {
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: var(--border-radius);
+            border-left: 4px solid;
+        }
+
+        .callout.blue { border-color: var(--primary); background-color: rgba(13, 111, 253, 0.05); }
+        .callout.green { border-color: #198754; background-color: rgba(25, 135, 84, 0.05); }
+        .callout.yellow { border-color: #ffc107; background-color: rgba(255, 193, 7, 0.05); }
+        .callout.red { border-color: #dc3545; background-color: rgba(220, 53, 69, 0.05); }
+        .callout.purple { border-color: #6f42c1; background-color: rgba(111, 66, 193, 0.05); }
+
+        .callot-icon {
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        katex {
+            font-size: 1.2em;
+        }
+
+        .formula-explanation {
+            margin-top: 0.5rem;
+            padding-left: 2rem;
+        }
+
+        .formula-explanation li {
+            margin-bottom: 0.5rem;
+        }
+
+        .worked-example {
+            background-color: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            border: 1px solid #dee2e6;
+        }
+
+        .final-answer {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--primary);
+            padding: 0.5rem;
+            text-align: center;
+            border: 2px dashed var(--primary);
+            display: inline-block;
+            margin: 1rem 0;
+        }
+
+        #demo-container {
+            width: 100%;
+            height: 300px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+            position: relative;
+            background-color: white;
+        }
+
+        .demo-controls {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+
+        .demo-controls input, .demo-controls button {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+        }
+
+        .demo-controls button {
+            background-color: var(--primary);
+            color: white;
+            cursor: pointer;
+        }
+
+        .demo-controls button:hover {
+            background-color: #0b5ed7;
+        }
+
+        .watch-out-list {
+            columns: 2;
+            gap: 2rem;
+        }
+
+        .practice-questions {
+            columns: 2;
+            gap: 2rem;
+        }
+
+        .practice-questions details {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius);
+        }
+
+        .practice-questions summary {
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .video-list {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .video-item {
+            flex: 1;
+            min-width: 200px;
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+        }
+
+        .cheat-sheet {
+            background-color: white;
+            border: 1px solid #ddd;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            margin: 2rem 0;
+        }
+
+        .cheat-sheet h3 {
+            margin-top: 0;
+        }
+
+        @media print {
+            .sidebar, #demo-container, .demo-controls, .video-list {
+                display: none !important;
+            }
+            body {
+                max-width: none;
+                margin: 0;
+                padding: 15mm;
+            }
+            .cheat-sheet {
+                border: none;
+                padding: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: static;
+                width: 100%;
+                margin-bottom: 2rem;
+            }
+            .content-column {
+                margin-left: 0;
+            }
+            .watch-out-list, .practice-questions {
+                columns: 1;
+            }
+        }
+
+        .dark-mode-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .dark-mode-toggle button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--border-radius);
+            background-color: var(--primary);
+            color: white;
+            cursor: pointer;
+        }
+
+        .dark-mode-toggle button:hover {
+            background-color: #0b5ed7;
+        }
+    </style>
+</head>
+<body>
+    <div class="dark-mode-toggle">
+        <button id="theme-toggle">🌓 Toggle Dark Mode</button>
+    </div>
+
+    <div class="sidebar">
+        <h3>Contents</h3>
+        <a href="#big-idea" class="toc-link">Big Idea</a>
+        <a href="#metaphor" class="toc-link">Everyday Metaphor</a>
+        <a href="#why-matters" class="toc-link">Why It Matters</a>
+        <a href="#formulas" class="toc-link">Formulas</a>
+        <a href="#worked-example" class="toc-link">Worked Example</a>
+        <a href="#interactive-demo" class="toc-link">Interactive Demo</a>
+        <a href="#watch-out" class="toc-link">Watch Out</a>
+        <a href="#experiment-link" class="toc-link">Experiment Link</a>
+        <a href="#videos" class="toc-link">Videos</a>
+        <a href="#practice" class="toc-link">Practice Questions</a>
+        <a href="#cheat-sheet" class="toc-link">Cheat Sheet</a>
+    </div>
+
+    <div class="content-column">
+        <header>
+            <h1>Lecture 01: Mathematics Primer</h1>
+            <p><strong>Matrix Basics for Machine Learning</strong></p>
+        </header>
+
+        <!-- Section 1: Big Idea -->
+        <section class="section" id="big-idea">
+            <h2>Big Idea</h2>
+            <p>Matrices transform space, and understanding these transformations helps us grasp how machine learning algorithms process and interpret data.</p>
+        </section>
+
+        <!-- Section 2: Everyday Metaphor -->
+        <section class="section" id="metaphor">
+            <h2>Everyday Metaphor</h2>
+            <div class="callout blue">
+                <span class="callout-icon">💡</span>
+                <ul>
+                    <li><strong>Matrix = rubber-sheet stretching machine</strong>: Imagine a grid drawn on a rubber sheet. When you pull the sheet in different directions, the grid lines stretch and rotate, but the relationship between points stays consistent.</li>
+                    <li><strong>Determinant = area scaling factor</strong>: Tells you how much the rubber sheet stretches or shrinks areas. A determinant of 2 means areas become twice as big; 0.5 means half the size; 0 means the sheet collapses to a line.</li>
+                    <li><strong>Eigenvector = direction that only stretches</strong>: Certain directions on the rubber sheet, when pulled, don't change direction - they only get longer or shorter. These special directions are eigenvectors, and how much they stretch is the eigenvalue.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 3: Why It Matters -->
+        <section class="section" id="why-matters">
+            <h2>Why It Matters</h2>
+            <ul>
+                <li>In machine learning, data is often represented as matrices</li>
+                <li>Understanding matrix operations helps us comprehend how algorithms like PCA reduce dimensionality</li>
+                <li>Helps us understand how neural networks transform inputs through layers</li>
+                <li>Enables us to solve systems of equations that arise in model fitting</li>
+                <li>Without this foundation, we'd be using ML tools as black boxes</li>
+            </ul>
+        </section>
+
+        <!-- Section 4: Formulas -->
+        <section class="section" id="formulas">
+            <h2>Formulas</h2>
+
+            <div class="callout green">
+                <span class="callout-icon">📐</span>
+                <strong>Determinant of 2x2 Matrix</strong>
+            </div>
+            <p>
+                \[
+                \text{det}\begin{pmatrix} a & b \\ c & d \end{pmatrix} = ad - bc
+                \]
+            </p>
+            <ul class="formula-explanation">
+                <li><strong>a, b, c, d</strong>: The four entries of the 2x2 matrix</li>
+                <li><strong>ad</strong>: Product of the diagonal from top-left to bottom-right</li>
+                <li><strong>bc</strong>: Product of the diagonal from top-right to bottom-left</li>
+                <li><strong>ad - bc</strong>: The difference gives the signed area scaling factor</li>
+            </ul>
+
+            <div class="callout green">
+                <span class="callout-icon">📐</span>
+                <strong>Determinant of 3x3 Matrix</strong>
+            </div>
+            <p>
+                \[
+                \text{det}\begin{pmatrix} a & b & c \\ d & e & f \\ g & h & i \end{pmatrix} = a(ei - fh) - b(di - fg) + c(dh - eg)
+                \]
+            </p>
+            <ul class="formula-explanation">
+                <li><strong>a, b, c, d, e, f, g, h, i</strong>: The nine entries of the 3x3 matrix</li>
+                <li><strong>ei - fh</strong>: Determinant of the submatrix obtained by removing row 1 and column 1</li>
+                <li><strong>di - fg</strong>: Determinant of the submatrix obtained by removing row 1 and column 2</li>
+                <li><strong>dh - eg</strong>: Determinant of the submatrix obtained by removing row 1 and column 3</li>
+                <li>The signs follow a + - + pattern for the first row expansion</li>
+            </ul>
+
+            <div class="callout green">
+                <span class="callout-icon">📐</span>
+                <strong>Trace of a Matrix</strong>
+            </div>
+            <p>
+                \[
+                \text{tr}(A) = \sum_{i=1}^n a_{ii} = a_{11} + a_{22} + \dots + a_{nn}
+                \]
+            </p>
+            <ul class="formula-explanation">
+                <li><strong>tr(A)</strong>: Trace of matrix A</li>
+                <li><strong>n</strong>: Dimension of the square matrix</li>
+                <li><strong>a_{ii}</strong>: The diagonal entries where row index equals column index</li>
+                <li><strong>Sum of diagonals</strong>: Adding up all entries from top-left to bottom-right</li>
+            </ul>
+
+            <div class="callout green">
+                <span class="callout-icon">📐</span>
+                <strong>Eigenvalue Equation</strong>
+            </div>
+            <p>
+                \[
+                A\mathbf{v} = \lambda\mathbf{v}
+                \]
+            </p>
+            <ul class="formula-explanation">
+                <li><strong>A</strong>: An n×n square matrix representing a linear transformation</li>
+                <li><strong>v</strong>: Eigenvector (nonzero vector that doesn't change direction under transformation)</li>
+                <li><strong>λ (lambda)</strong>: Eigenvalue (scalar factor by which the eigenvector is stretched)</li>
+                <li><strong>Av</strong>: Result of applying matrix A to vector v</li>
+                <li><strong>λv</strong>: Eigenvector scaled by eigenvalue</li>
+            </ul>
+
+            <div class="callout green">
+                <span class="callout-icon">📐</span>
+                <strong>Characteristic Polynomial</strong>
+            </div>
+            <p>
+                \[
+                \text{det}(A - \lambda I) = 0
+                \]
+            </p>
+            <ul class="formula-explanation">
+                <li><strong>A</strong>: The original square matrix</li>
+                <li><strong>λ (lambda)</strong>: Variable representing eigenvalues</li>
+                <li><strong>I</strong>: Identity matrix (1s on diagonal, 0s elsewhere)</li>
+                <li><strong>A - λI</strong>: Matrix obtained by subtracting λ from each diagonal entry of A</li>
+                <li><strong>det(A - λI)</strong>: Determinant of the modified matrix</li>
+                <li><strong>= 0</strong>: Setting determinant to zero gives polynomial whose roots are eigenvalues</li>
+            </ul>
+        </section>
+
+        <!-- Section 5: Worked Example -->
+        <section class="section" id="worked-example">
+            <h2>Worked Example by Hand</h2>
+            <div class="callout yellow">
+                <span class="callout-icon">🧮</span>
+                Using the example from the slides: Find the determinant of the matrix formed by composing vectors [2, 0, -8], [6, 1, 0], and [1, 4, -1]
+            </div>
+            <div class="worked-example">
+                <h3>Step 1: Write down the matrix</h3>
+                <p>
+                    \[
+                    A = \begin{pmatrix}
+                    2 & 0 & -8 \\
+                    6 & 1 & 0 \\
+                    1 & 4 & -1
+                    \end{pmatrix}
+                    \]
+                </p>
+
+                <h3>Step 2: Apply the 3x3 determinant formula</h3>
+                <p>
+                    \[
+                    \text{det}(A) = 2(1 \cdot (-1) - 0 \cdot 4) - 0(6 \cdot (-1) - 0 \cdot 1) + (-8)(6 \cdot 4 - 1 \cdot 1)
+                    \]
+                </p>
+
+                <h3>Step 3: Calculate each term</h3>
+                <ul>
+                    <li>First term: \(2(1 \cdot (-1) - 0 \cdot 4) = 2(-1 - 0) = 2(-1) = -2\)</li>
+                    <li>Second term: \(-0(6 \cdot (-1) - 0 \cdot 1) = -0(-6 - 0) = -0(-6) = 0\)</li>
+                    <li>Third term: \((-8)(6 \cdot 4 - 1 \cdot 1) = (-8)(24 - 1) = (-8)(23) = -184\)</li>
+                </ul>
+
+                <h3>Step 4: Sum the terms</h3>
+                <p>
+                    \[
+                    \text{det}(A) = -2 + 0 + (-184) = -186
+                    \]
+                </p>
+
+                <h3>Step 5: Take absolute value (as shown in slides)</h3>
+                <p>
+                    \[
+                    |\text{det}(A)| = |-186| = 186
+                    \]
+                </p>
+
+                <div class="final-answer">|det(A)| = 186</div>
+                <p><em>This means the transformation represented by matrix A scales volumes by a factor of 186.</em></p>
+            </div>
+        </section>
+
+        <!-- Section 6: Interactive Demo -->
+        <section class="section" id="interactive-demo">
+            <h2>Interactive Demo</h2>
+            <div class="callout blue">
+                <span class="callout-icon">🎛️</span>
+                <ul>
+                    <li><strong>Try this:</strong> Drag the sliders to transform the unit square</li>
+                    <li>See how the determinant changes in real-time</li>
+                    <li>Observe how basis vectors are transformed</li>
+                </ul>
+            </div>
+            <div id="demo-container">
+                <canvas id="demoCanvas" width="600" height="400"></canvas>
+            </div>
+            <div class="demo-controls">
+                <label>
+                    Vector î (x-component):
+                    <input type="range" id="vec1x" min="-2" max="2" step="0.1" value="1">
+                    <span id="vec1x-value">1.0</span>
+                </label>
+                <label>
+                    Vector î (y-component):
+                    <input type="range" id="vec1y" min="-2" max="2" step="0.1" value="0">
+                    <span id="vec1y-value">0.0</span>
+                </label>
+                <label>
+                    Vector ĵ (x-component):
+                    <input type="range" id="vec2x" min="-2" max="2" step="0.1" value="0">
+                    <span id="vec2x-value">0.0</span>
+                </label>
+                <label>
+                    Vector ĵ (y-component):
+                    <input type="range" id="vec2y" min="-2" max="2" step="0.1" value="1">
+                    <span id="vec2y-value">1.0</span>
+                </label>
+                <button id="reset-btn">Reset</button>
+            </div>
+            <p id="det-display">Determinant: <strong>1.00</strong></p>
+        </section>
+
+        <!-- Section 7: Watch Out -->
+        <section class="section" id="watch-out">
+            <h2>Watch Out: Common Mistakes & Exam Traps</h2>
+            <div class="callout red">
+                <span class="callout-icon">⚠️</span>
+                <ul>
+                    <li><strong>Confusing determinant with trace:</strong> Determinant involves products and subtraction (ad-bc), trace is just sum of diagonals (a+d). They measure different properties!</li>
+                    <li><strong>Forgetting the sign in 3x3 determinant:</strong> The expansion follows + - + pattern for the first row, not + + +. Missing a minus sign gives wrong answer.</li>
+                    <li><strong>Thinking zero determinant means zero matrix:</strong> A zero determinant means the matrix is singular (collapses space), not that all entries are zero. Example: [[1,1],[1,1]] has det=0 but isn't the zero matrix.</li>
+                    <li><strong>Mixing up eigenvalues and eigenvectors:</strong> Remember: Av = λv. The vector v doesn't change direction (eigenvector), λ tells how much it stretches (eigenvalue).</li>
+                    <li><strong>Assuming all matrices have real eigenvalues:</strong> Rotation matrices like [[0,-1],[1,0]] have complex eigenvalues ±i. Only symmetric matrices are guaranteed real eigenvalues.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 8: Experiment Link -->
+        <section class="section" id="experiment-link">
+            <h2>Experiment Link</h2>
+            <div class="callout purple">
+                <span class="callout-icon">🔬</span>
+                <ul>
+                    <li>Run <strong>notebooks/01_math_primer.ipynb</strong></li>
+                    <li>Navigate to Section 2: "Interactive Matrix Transformation"</li>
+                    <li>See live visualizations of how different matrices transform space</li>
+                    <li>Verify the determinant calculations interactively</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 9: Videos -->
+        <section class="section" id="videos">
+            <h2>Videos to Watch</h2>
+            <div class="callout blue">
+                <span class="callout-icon">📺</span>
+                <ul>
+                    <li>
+                        <strong>3Blue1Brown: Essence of Linear Algebra</strong>
+                        <br>
+                        <a href="https://www.youtube.com/results?search_query=3Blue1Brown+linear+algebra+determinant" target="_blank">Search: 3Blue1Brown linear algebra determinant</a>
+                        <br>
+                        <em>Watch for: Geometric intuition of determinant as volume scaling (Chapters 6-7)</em>
+                    </li>
+                    <li>
+                        <strong>3Blue1Brown: Eigenvectors and Eigenvalues</strong>
+                        <br>
+                        <a href="https://www.youtube.com/results?search_query=3Blue1Brown+eigenvalues+eigenvectors" target="_blank">Search: 3Blue1Brown eigenvalues eigenvectors</a>
+                        <br>
+                        <em>Watch for: Visual explanation of what eigenvectors actually represent (Chapter 9)</em>
+                    </li>
+                    <li>
+                        <strong>StatQuest: Matrix Operations Basics</strong>
+                        <br>
+                        <a href="https://www.youtube.com/results?search_query=StatQuest+matrix+operations+basics" target="_blank">Search: StatQuest matrix operations basics</a>
+                        <br>
+                        <em>Watch for: Clear, step-by calculation examples for 2x2 and 3x3 matrices</em>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 10: Practice Questions -->
+        <section class="section" id="practice">
+            <h2>Practice Questions</h2>
+            <div class="callout blue">
+                <span class="callout-icon">❓</span>
+                <ul>
+                    <li>Try to solve these yourself first</li>
+                    <li>Click on each question to reveal the answer</li>
+                    <li>Check your understanding of key concepts</li>
+                </ul>
+            </div>
+            <div class="practice-questions">
+                <details>
+                    <summary>Concept: What does a determinant of 0 tell you about a matrix?</summary>
+                    <p>The matrix is singular - it doesn't have an inverse and transforms space into a lower dimension (e.g., squashes a 2D area into a line or point).</p>
+                </details>
+
+                <details>
+                    <summary>Concept: If you multiply a matrix by 2, what happens to its determinant?</summary>
+                    <p>For an n×n matrix, multiplying by 2 multiplies the determinant by 2ⁿ. For 2x2: det(2A) = 4·det(A); for 3x3: det(2A) = 8·det(A).</p>
+                </details>
+
+                <details>
+                    <summary>Calculation: Find the determinant of \(\begin{pmatrix} 3 & 1 \\ 2 & 4 \end{pmatrix}\)</summary>
+                    <p>det = (3×4) - (1×2) = 12 - 2 = 10</p>
+                </details>
+
+                <details>
+                    <summary>Calculation: Find the determinant of \(\begin{pmatrix} 1 & 0 & 2 \\ 3 & -1 & 1 \\ 2 & 1 & 0 \end{pmatrix}\)</summary>
+                    <p>Using first row: 1((-1)×0 - 1×1) - 0(3×0 - 1×2) + 2(3×1 - (-1)×2) = 1(0-1) - 0 + 2(3+2) = -1 + 10 = 9</p>
+                </details>
+
+                <details>
+                    <summary>Explain it simply: Why do we care about eigenvectors in machine learning?</summary>
+                    <p>Eigenvectors show the directions where data varies the most (in PCA) or where transformations act simply (stretching only). They reveal the "natural axes" of our data, helping us reduce dimensions while preserving important patterns.</p>
+                </details>
+            </div>
+        </section>
+
+        <!-- Section 11: Cheat Sheet Draft -->
+        <section class="section" id="cheat-sheet">
+            <h2>Cheat Sheet Draft</h2>
+            <div class="callout blue">
+                <span class="callout-icon">📝</span>
+                <ul>
+                    <li>Optimized for printing - fits approximately 1/7 of an A4 page</li>
+                    <li>Contains key formulas, definitions, and common mistakes</li>
+                    <li>Designed for quick review and reference</li>
+                </ul>
+            </div>
+            <div class="cheat-sheet">
+                <h3>Mathematics Primer Cheat Sheet</h3>
+
+                <div class="callout green">
+                    <strong>Key Formulas</strong>
+                </div>
+                <p>
+                    \[
+                    \text{det}\begin{pmatrix} a & b \\ c & d \end{pmatrix} = ad - bc
+                    \]
+                </p>
+                <p>
+                    \[
+                    \text{det}(A) = \sum_{j=1}^n (-1)^{1+j} a_{1j} \text{det}(M_{1j})
+                    \]
+                </p>
+                <p>
+                    \[
+                    \text{tr}(A) = \sum_{i=1}^n a_{ii}
+                    \]
+                </p>
+                <p>
+                    \[
+                    A\mathbf{v} = \lambda\mathbf{v}
+                    \]
+                </p>
+                <p>
+                    \[
+                    \text{det}(A - \lambda I) = 0
+                    \]
+                </p>
+
+                <div class="callout green">
+                    <strong>Key Definitions</strong>
+                </div>
+                <ul>
+                    <li><strong>Determinant:</strong> Volume scaling factor of linear transformation</li>
+                    <li><strong>Trace:</strong> Sum of diagonal elements</li>
+                    <li><strong>Eigenvector:</strong> Non-zero vector that only scales (not rotates) under transformation</li>
+                    <li><strong>Eigenvalue:</strong> Scaling factor for eigenvector</li>
+                    <li><strong>Singular Matrix:</strong> Matrix with determinant = 0 (no inverse)</li>
+                </ul>
+
+                <div class="callout red">
+                    <strong>Common Mistakes to Avoid</strong>
+                </div>
+                <ul>
+                    <li>Confusing det(A) with tr(A)</li>
+                    <li>Forgetting - signs in 3x3 determinant expansion</li>
+                    <li>Thinking det=0 means zero matrix</li>
+                    <li>Mixing up Av = λv (remember: v doesn't change direction)</li>
+                    <li>Assuming all matrices have real eigenvalues</li>
+                </ul>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Dark mode toggle
+        document.getElementById('theme-toggle').addEventListener('click', function() {
+            document.documentElement.setAttribute('data-theme',
+                document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        });
+
+        // Interactive demo
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('demoCanvas');
+            const ctx = canvas.getContext('2d');
+            const vec1xInput = document.getElementById('vec1x');
+            const vec1yInput = document.getElementById('vec1y');
+            const vec2xInput = document.getElementById('vec2x');
+            const vec2yInput = document.getElementById('vec2y');
+            const vec1xValue = document.getElementById('vec1x-value');
+            const vec1yValue = document.getElementById('vec1y-value');
+            const vec2xValue = document.getElementById('vec2x-value');
+            const vec2yValue = document.getElementById('vec2y-value');
+            const detDisplay = document.getElementById('det-display');
+            const resetBtn = document.getElementById('reset-btn');
+
+            function updateValueDisplays() {
+                vec1xValue.textContent = vec1xInput.value;
+                vec1yValue.textContent = vec1yInput.value;
+                vec2xValue.textContent = vec2xInput.value;
+                vec2yValue.textContent = vec2yInput.value;
+            }
+
+            function drawGrid() {
+                ctx.strokeStyle = '#e0e0e0';
+                ctx.lineWidth = 1;
+
+                // Draw grid lines
+                for (let i = -10; i <= 10; i++) {
+                    const x = canvas.width/2 + i * 20;
+                    const y = canvas.height/2 + i * 20;
+
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(canvas.width, y);
+                    ctx.stroke();
+                }
+
+                // Draw axes
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(canvas.width/2, 0);
+                ctx.lineTo(canvas.width/2, canvas.height);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(0, canvas.height/2);
+                ctx.lineTo(canvas.width, canvas.height/2);
+                ctx.stroke();
+            }
+
+            function drawVector(vecX, vecY, color, label) {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(canvas.width/2, canvas.height/2);
+                ctx.lineTo(canvas.width/2 + vecX * 20, canvas.height/2 - vecY * 20);
+                ctx.stroke();
+
+                // Draw arrowhead
+                const headLen = 10;
+                const angle = Math.atan2(vecY, vecX);
+                ctx.beginPath();
+                ctx.moveTo(
+                    canvas.width/2 + vecX * 20 - headLen * Math.cos(angle - Math.PI/6),
+                    canvas.height/2 - vecY * 20 + headLen * Math.sin(angle - Math.PI/6)
+                );
+                ctx.lineTo(
+                    canvas.width/2 + vecX * 20,
+                    canvas.height/2 - vecY * 20
+                );
+                ctx.lineTo(
+                    canvas.width/2 + vecX * 20 - headLen * Math.cos(angle + Math.PI/6),
+                    canvas.height/2 - vecY * 20 + headLen * Math.sin(angle + Math.PI/6)
+                );
+                ctx.closePath();
+                ctx.stroke();
+
+                // Draw label
+                ctx.fillStyle = color;
+                ctx.font = '14px Arial';
+                ctx.fillText(label,
+                    canvas.width/2 + vecX * 20 + 5,
+                    canvas.height/2 - vecY * 20 - 5);
+            }
+
+            function drawTransformedSquare(vec1X, vec1Y, vec2X, vec2Y) {
+                ctx.fillStyle = 'rgba(0, 123, 255, 0.3)';
+                ctx.beginPath();
+
+                // Original unit square corners: (0,0), (1,0), (1,1), (0,1)
+                // Transform each corner by the matrix [vec1X vec2X; vec1Y vec2Y]
+                const corners = [
+                    {x: 0, y: 0},
+                    {x: 1, y: 0},
+                    {x: 1, y: 1},
+                    {x: 0, y: 1}
+                ];
+
+                const transformed = corners.map(corner => ({
+                    x: canvas.width/2 + (corner.x * vec1X + corner.y * vec2X) * 20,
+                    y: canvas.height/2 - (corner.x * vec1Y + corner.y * vec2Y) * 20
+                }));
+
+                ctx.moveTo(transformed[0].x, transformed[0].y);
+                for (let i = 1; i < transformed.length; i++) {
+                    ctx.lineTo(transformed[i].x, transformed[i].y);
+                }
+                ctx.closePath();
+                ctx.fill();
+
+                // Draw outline
+                ctx.strokeStyle = 'rgba(0, 123, 255, 0.8)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            function calculateDeterminant() {
+                const a = parseFloat(vec1xInput.value);
+                const b = parseFloat(vec2xInput.value);
+                const c = parseFloat(vec1yInput.value);
+                const d = parseFloat(vec2yInput.value);
+                return a * d - b * c;
+            }
+
+            function updateDisplay() {
+                const det = calculateDeterminant();
+                detDisplay.innerHTML = `Determinant: <strong>${det.toFixed(2)}</strong>`;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawGrid();
+
+                // Draw basis vectors
+                drawVector(1, 0, '#6c757d', 'î');
+                drawVector(0, 1, '#6c757d', 'ĵ');
+
+                // Draw transformed basis vectors
+                drawVector(
+                    parseFloat(vec1xInput.value),
+                    parseFloat(vec1yInput.value),
+                    '#0d6efd',
+                    'transformed î'
+                );
+                drawVector(
+                    parseFloat(vec2xInput.value),
+                    parseFloat(vec2yInput.value),
+                    '#0d6efd',
+                    'transformed ĵ'
+                );
+
+                // Draw transformed unit square
+                drawTransformedSquare(
+                    parseFloat(vec1xInput.value),
+                    parseFloat(vec1yInput.value),
+                    parseFloat(vec2xInput.value),
+                    parseFloat(vec2yInput.value)
+                );
+            }
+
+            // Event listeners
+            [vec1xInput, vec1yInput, vec2xInput, vec2yInput].forEach(input => {
+                input.addEventListener('input', () => {
+                    updateValueDisplays();
+                    updateDisplay();
+                });
+            });
+
+            resetBtn.addEventListener('click', () => {
+                vec1xInput.value = '1';
+                vec1yInput.value = '0';
+                vec2xInput.value = '0';
+                vec2yInput.value = '1';
+                updateValueDisplays();
+                updateDisplay();
+            });
+
+            // Initialize
+            updateValueDisplays();
+            updateDisplay();
+        });
+
+        // Table of contents highlighting
+        document.addEventListener('DOMContentLoaded', function() {
+            const sections = document.querySelectorAll('.section');
+            const tocLinks = document.querySelectorAll('.toc-link');
+
+            function highlightToc() {
+                let scrollPosition = window.scrollY + 100; // Offset for header
+
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    const sectionHeight = section.offsetHeight;
+                    const sectionId = section.getAttribute('id');
+
+                    if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+                        tocLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href') === '#' + sectionId) {
+                                link.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            }
+
+            window.addEventListener('scroll', highlightToc);
+            // Initial call
+            highlightToc();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecture 07: Decision Trees</title>
+    <!-- MathJax 3 for math rendering -->
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']],
+          processEscapes: true,
+          processEnvironments: true
+        }
+      };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script"></script>
+    <style>
+        :root {
+            --bg-light: #f8f9fa;
+            --bg-dark: #212529;
+            --text-light: #212529;
+            --text-dark: #f8f9fa;
+            --primary: #0d6efd;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-light: #212529;
+            --bg-dark: #f8f9fa;
+            --text-light: #f8f9fa;
+            --text-dark: #212529;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--text-light);
+            background-color: var(--bg-light);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            color: #6c757d;
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .formula {
+            background-color: rgba(13, 112, 253, 0.1);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .symbols {
+            margin: 1.5rem 0;
+        }
+
+        .symbols h3 {
+            margin-bottom: 0.5rem;
+            color: #6c757d;
+        }
+
+        .symbols ul {
+            line-height: 1.8;
+        }
+
+        .example {
+            background-color: #e9ecef;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+        }
+
+        .experiment-link, .videos, .practice-questions, .cheat-sheet {
+            background-color: #e9ecef;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+        }
+
+        .watch-out {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+        }
+
+        .watch-out h3 {
+            color: #856404;
+            margin-top: 0;
+        }
+
+        details {
+            margin: 1rem 0;
+        }
+
+        summary {
+            cursor: pointer;
+            padding: 0.5rem;
+            background-color: #dee2e6;
+            border-radius: var(--border-radius);
+        }
+
+        details[open] summary {
+            background-color: #cbd3da;
+        }
+
+        details > * {
+            margin: 0.5rem 1rem;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .stat {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .dark-mode-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .dark-mode-toggle button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--border-radius);
+            background-color: var(--primary);
+            color: white;
+            cursor: pointer;
+        }
+
+        .dark-mode-toggle button:hover {
+            background-color: #0b5ed7;
+        }
+
+        @media (max-width: 768px) {
+            .stats {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        @media print {
+            .dark-mode-toggle, .stats, .progress-section {
+                display: none !important;
+            }
+            body {
+                max-width: none;
+                margin: 0;
+                padding: 15mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dark-mode-toggle">
+        <button id="theme-toggle">🌓 Toggle Dark Mode</button>
+    </div>
+
+    <header>
+        <h1>Lecture 07: Decision Trees</h1>
+        <p class="subtitle">Hierarchical Models for Classification and Regression</p>
+    </header>
+
+    <div class="section">
+        <h2>Big Idea</h2>
+        <p>Decision trees create a flowchart-like structure where each internal node represents a test on a feature, each branch represents the outcome of the test, and each leaf node represents a class label or continuous value. They are intuitive, interpretable models that can capture complex non-linear relationships.</p>
+    </div>
+
+    <div class="section">
+        <h2>Everyday Metaphor</h2>
+        <blockquote>
+            💡 **Decision Tree = playing 20 Questions**: Imagine trying to identify an animal by asking yes/no questions like 'Does it have fur?', 'Can it fly?', 'Does it live in water?'. Each question splits the possibilities until you can identify the animal.
+        </blockquote>
+        <blockquote>
+            **Features = the questions we ask**: Each feature in our data represents a potential question we can ask to split our data into more homogeneous groups.
+        </blockquote>
+        <blockquote>
+            **Tree depth = how specific we get**: A shallow tree gives broad categories; a deep tree gives very specific classifications but may overfit.
+        </blockquote>
+    </div>
+
+    <div class="section">
+        <h2>Why It Matters</h2>
+        <ul>
+            <li>Easy to interpret and visualize</li>
+            <li>Handles both numerical and categorical data</li>
+            <li>Requires little data preprocessing</li>
+            <li>Can capture non-linear relationships and interactions</li>
+            <li>Foundation for powerful ensemble methods like Random Forests and Gradient Boosting</li>
+            <li>Non-parametric approach that makes few assumptions about the data</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Formulas</h2>
+
+        <div class="formula">
+            <p>$$\\text{Entropy}(S) = -\\sum_{i=1}^c p_i \\log_2 p_i$$</p>
+            <p><strong>Entropy: Measures impurity or disorder in a set</strong></p>
+        </div>
+
+        <div class="formula">
+            <p>$$\\text{Information Gain}(S, A) = \\text{Entropy}(S) - \\sum_{v \\in \\text{Values}(A)} \\frac{|S_v|}{|S|} \\text{Entropy}(S_v)$$</p>
+            <p><strong>Information Gain: Reduction in entropy from splitting on attribute A</strong></p>
+        </div>
+
+        <div class="symbols">
+            <h3>What each symbol means in entropy and information gain:</h3>
+            <ul>
+                <li><strong>S</strong>: Dataset or subset</li>
+                <li><strong>c</strong>: Number of classes</li>
+                <li><strong>p_i</strong>: Proportion of class i in S</li>
+                <li><strong>Values(A)</strong>: Possible values of attribute A</li>
+                <li><strong>S_v</strong>: Subset of S where attribute A has value v</li>
+                <li><strong>|S|</strong>: Number of elements in set S</li>
+                <li><strong>|S_v|</strong>: Number of elements in subset S_v</li>
+            </ul>
+        </div>
+
+        <div class="formula">
+            <p>$$\\text{Gini}(S) = 1 - \\sum_{i=1}^c p_i^2$$</p>
+            <p><strong>Gini Impurity: Probability of misclassifying a randomly chosen element</strong></p>
+        </div>
+
+        <div class="formula">
+            <p>$$\\text{Variance}(S) = \\frac{1}{|S|} \\sum_{i=1}^{|S|} (y_i - \\bar{y})^2$$</p>
+            <p><strong>Variance: Measures spread of target values</strong></p>
+        </div>
+
+        <div class="symbols">
+            <h3>What each symbol means in variance:</h3>
+            <ul>
+                <li><strong>S</strong>: Dataset or subset</li>
+                <li><strong>y_i</strong>: Target value for sample i</li>
+                <li><strong>\\bar{y}</strong>: Mean target value in S</li>
+                <li><strong>|S|</strong>: Number of elements in set S</li>
+            </ul>
+        </div>
+
+        <div class="formula">
+            <p>$$\\text{Reduction in Variance}(S, A) = \\text{Variance}(S) - \\sum_{v \\in \\text{Values}(A)} \\frac{|S_v|}{|S|} \\text{Variance}(S_v)$$</p>
+            <p><strong>Reduction in Variance: How much splitting reduces variance</strong></p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Worked Example by Hand</h2>
+        <div class="example">
+            <p>🧮 Simple decision tree: Classify these 2D points as blue or red:<br>
+            Blue: [2,2], [2,3], [3,2], [8,8], [8,9], [9,8]<br>
+            Red:  [2,8], [3,7], [4,6], [8,2], [9,1], [9,3]</p>
+
+            <h3>Step 1: Visualize the data</h3>
+            <p>Points are clearly separable - blue points clustered in two groups, red points filling the gaps.</p>
+
+            <h3>Step 2: Choose first split (using Gini impurity)</h3>
+            <p>Test splitting on x₁ at various thresholds:</p>
+            <p>- Split at x₁ = 4.5: Left: 6 blue, 3 red → Gini = 0.38<br>
+               Right: 0 blue, 6 red → Gini = 0.0<br>
+               Weighted Gini = (9/15)×0.38 + (6/15)×0.0 = 0.23</p>
+            <p>Test splitting on x₂ at various thresholds:</p>
+            <p>- Split at x₂ = 5.5: Bottom: 3 blue, 6 red → Gini = 0.38<br>
+               Top: 3 blue, 0 red → Gini = 0.0<br>
+               Weighted Gini = (9/15)×0.38 + (6/15)×0.0 = 0.23</p>
+            <p>Both splits give same Gini improvement. Choose x₁ = 4.5.</p>
+
+            <h3>Step 3: Split the data</h3>
+            <p>**Left branch (x₁ < 4.5)**: 6 blue, 3 red<br>
+              - Further split on x₂ = 5.5: <br>
+              - Bottom: 0 blue, 3 red → Pure red leaf<br>
+              - Top: 6 blue, 0 red → Pure blue leaf</p>
+            <p>**Right branch (x₁ ≥ 4.5)**: 0 blue, 6 red → Pure red leaf</p>
+
+            <h3>Final Tree:</h3>
+            <p>IF x₁ < 4.5 THEN<br>
+              IF x₂ < 5.5 THEN Class = Red<br>
+              ELSE Class = Blue<br>
+            ELSE<br>
+              Class = Red</p>
+
+            <p><em>Answer: The decision tree perfectly separates the two classes with just two splits.</em></p>
+        </div>
+    </div>
+
+    <div class="experiment-link">
+        <h2>Experiment Link</h2>
+        <p>🔬 Run <strong>Section 2: Decision Tree Experiment</strong> in the Jupyter notebook to explore how decision tree parameters affect model performance and visualize different tree structures.</p>
+        <p>This section will include:</p>
+        <ul>
+            <li>Exploration of max_depth, min_samples_split, min_samples_leaf parameters</li>
+            <li>Visualization of decision boundaries for different tree complexities</li>
+            <li>Comparison of entropy vs Gini splitting criteria</li>
+            <li>Analysis of overfitting as tree depth increases</li>
+            <li>Feature importance analysis</li>
+            <li>Comparison with linear models to show when trees excel</li>
+        </ul>
+    </div>
+
+    <div class="watch-out">
+        <h3>Watch Out: Common Mistakes & Exam Traps</h3>
+        <ul>
+            <li><strong>Overfitting:</strong> Decision trees can easily overfit, especially when deep; always use pruning, max_depth, or min_samples_leaf to control complexity.</li>
+            <li><strong>Instability:</strong> Small changes in data can lead to completely different trees; consider ensemble methods for more stable predictions.</li>
+            <li><strong>Bias toward features with more levels:</strong> Features with many distinct values may be preferred in splitting; consider encoding or using entropy-based measures.</li>
+            <li><strong>Ignoring feature scaling:</strong> While decision trees don't require scaling, some implementations may be affected by very different scales.</li>
+            <li><strong>Creating uninterpretable trees:</strong> Very deep trees become impossible to interpret; balance accuracy with interpretability.</li>
+            <li><strong>Overlooking that trees create axis-aligned splits:</strong> Decision trees can only split on single features at a time; diagonal boundaries require multiple splits.</li>
+            <li><strong>Neglecting to handle missing values:</strong> Different implementations handle missing values differently; check your specific library's behavior.</li>
+            <li><strong>Using accuracy alone for evaluation:</strong> Consider precision, recall, F1-score, especially for imbalanced datasets.</li>
+        </ul>
+    </div>
+
+    <div class="videos">
+        <h2>Videos to Watch</h2>
+        <p>📺 <strong>Recommended video searches:</strong></p>
+        <ol>
+            <li><strong>Decision Tree Classification & Regression</strong><br>
+                Search: https://www.youtube.com/results?search_query=decision+tree+machine+learning<br>
+                Watch for: Clear explanation of how decision trees work for both classification and regression</li>
+            <li><strong>StatQuest: Decision Trees Part 1 - Basics</strong><br>
+                Search: https://www.youtube.com/results?search_query=StatQuest+Decision+Trees<br>
+                Watch for: Intuitive breakdown of entropy, information gain, and tree building</li>
+            <li><strong>Machine Learning Zoomcamp: Trees and Ensemble Methods</strong><br>
+                Search: https://www.youtube.com/results?search_query=trees+ensemble+methods+machine+learning+zoomcamp<br>
+                Watch for: Practical implementation and connection to Random Forests, Gradient Boosting</li>
+        </ol>
+    </div>
+
+    <div class="practice-questions">
+        <h2>Practice Questions</h2>
+        <p>❓ Try to solve these yourself first, then check the answers below!</p>
+
+        <details>
+            <summary>Question 1 (Concept): What is the main advantage of decision trees over linear models?</summary>
+            <p>Decision trees can capture non-linear relationships and feature interactions without requiring explicit feature engineering, while linear models can only capture linear relationships unless interaction terms are manually added.</p>
+        </details>
+
+        <details>
+            <summary>Question 2 (Concept): How does entropy measure impurity in a dataset?</summary>
+            <p>Entropy measures the disorder or impurity in a dataset. A pure dataset (all same class) has entropy of 0. A perfectly balanced dataset (50/50 split between two classes) has entropy of 1. Higher entropy indicates more mixed classes.</p>
+        </details>
+
+        <details>
+            <summary>Question 3 (Calculation): Given a dataset with 4 samples of class A and 1 sample of class B, what is the Gini impurity?</summary>
+            <p>p_A = 4/5 = 0.8, p_B = 1/5 = 0.2<br>
+               Gini = 1 - (p_A² + p_B²) = 1 - (0.8² + 0.2²) = 1 - (0.64 + 0.04) = 1 - 0.68 = 0.32</p>
+        </details>
+
+        <details>
+            <summary>Question 4 (Concept): What is the purpose of pruning in decision trees?</summary>
+            <p>Pruning reduces the size of decision trees by removing sections that provide little power to classify instances, which helps prevent overfitting and improves generalization to unseen data.</p>
+        </details>
+
+        <details>
+            <summary>Question 5 (Explain it simply): When would you prefer a decision tree over a neural network?</summary>
+            <p>Prefer decision trees when: you need interpretable models, you have small to medium datasets, you want fast training and prediction, you have mixed data types (numerical and categorical), or you need to explain predictions to stakeholders.</p>
+        </details>
+    </div>
+
+    <div class="cheat-sheet">
+        <h2>Cheat Sheet Draft</h2>
+        <p>📝 This section is optimized for printing - it should fit approximately 1/7 of an A4 page when printed.</p>
+
+        <div class="formula">
+            <p>$$\\text{Entropy}(S) = -\\sum_{i=1}^c p_i \\log_2 p_i$$</p>
+            <p><strong>Entropy</strong></p>
+        </div>
+
+        <div class="formula">
+            <p>$$\\text{Information Gain}(S, A) = \\text{Entropy}(S) - \\sum_{v \\in \\text{Values}(A)} \\frac{|S_v|}{|S|} \\text{Entropy}(S_v)$$</p>
+            <p><strong>Information Gain</strong></p>
+        </div>
+
+        <div class="formula">
+            <p>$$\\text{Gini}(S) = 1 - \\sum_{i=1}^c p_i^2$$</p>
+            <p><strong>Gini Impurity</strong></p>
+        </div>
+
+        <div class="formula">
+            <p>$$\\text{Variance}(S) = \\frac{1}{|S|} \\sum_{i=1}^{|S|} (y_i - \\bar{y})^2$$</p>
+            <p><strong>Variance</strong></p>
+        </div>
+
+        <h3>Key Definitions</h3>
+        <ul>
+            <li><strong>Root Node:</strong> Top node of the tree representing the entire dataset</li>
+            <li><strong>Decision Node:</strong> Internal node that tests a feature</li>
+            <li><strong>Leaf Node:</strong> Terminal node that represents a class label or value</li>
+            <li><strong>Splitting Criterion:</strong> Method used to choose the best feature to split on</li>
+            <li><strong>Pruning:</strong> Technique to reduce tree size and prevent overfitting</li>
+            <li><strong>Feature Importance:</strong> Measure of how much each feature contributes to tree purity</li>
+            <li><strong>Max Depth:</strong> Maximum number of levels in the tree</li>
+            <li><strong>Min Samples Leaf:</strong> Minimum samples required to be at a leaf node</li>
+        </ul>
+
+        <h3>Common Mistakes to Avoid</h3>
+        <ul>
+            <li>Overfitting by making trees too deep without pruning</li>
+            <li>Ignoring the instability of decision trees (small data changes → big tree changes)</li>
+            <li>Bias toward features with many distinct values</li>
+            <li>Creating overly complex trees that are impossible to interpret</li>
+            <li>Overlooking that decision trees create axis-aligned decision boundaries</li>
+            <li>Neglecting to handle missing values appropriately</li>
+            <li>Using a single accuracy metric without considering precision/recall for imbalanced data</li>
+        </ul>
+    </div>
+
+    <script>
+        // Dark mode toggle
+        document.getElementById('theme-toggle').addEventListener('click', function() {
+            document.documentElement.setAttribute('data-theme',
+                document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        });
+    </script>
+</body>
+</html>

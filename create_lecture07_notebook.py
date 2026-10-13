@@ -1,0 +1,432 @@
+#!/usr/bin/env python3
+"""
+Script to create a properly formatted Jupyter notebook for Lecture 07:
+Decision Trees
+"""
+
+import nbformat
+from nbformat.v4 import new_code_cell, new_markdown_cell
+import json
+
+def create_lecture07_notebook():
+    # Create a new notebook
+    notebook = nbformat.v4.new_notebook()
+
+    # List to hold all cells
+    cells = []
+
+    # First code cell: pip install
+    cells.append(new_code_cell(
+        source="!pip install numpy matplotlib scikit-learn seaborn"
+    ))
+
+    # Markdown cell: Title and introduction
+    cells.append(new_markdown_cell(
+        source="# Lecture 07: Decision Trees\n\n"
+               "## Hierarchical Models for Classification and Regression\n\n"
+               "## Big Idea\n"
+               "Decision trees create a flowchart-like structure where each internal node represents "
+               "a test on a feature, each branch represents the outcome of the test, and each leaf "
+               "node represents a class label or continuous value.\n\n"
+               "## Everyday Metaphor\n\n"
+           "> 💡 **Decision Tree = playing 20 Questions**: Imagine trying to identify an animal by asking "
+           "yes/no questions like 'Does it have fur?', 'Can it fly?', 'Does it live in water?'. "
+           "Each question splits the possibilities until you can identify the animal.\n"
+           "> \n"
+           "> **Features = the questions we ask**: Each feature in our data represents a potential "
+           "question we can ask to split our data into more homogeneous groups.\n"
+           "> \n"
+           "> **Tree depth = how specific we get**: A shallow tree gives broad categories; "
+           "a deep tree gives very specific classifications but may overfit.\n\n"
+           "## Why It Matters\n"
+           "- Easy to interpret and visualize\n"
+           "- Handles both numerical and categorical data\n"
+           "- Requires little data preprocessing\n"
+           "- Can capture non-linear relationships and interactions\n"
+           "- Foundation for powerful ensemble methods like Random Forests and Gradient Boosting\n\n"
+           "## Formulas\n"
+    ))
+
+    # Markdown cell: Decision Tree Basics
+    cells.append(new_markdown_cell(
+        source="### Decision Tree Basics\n\n"
+               "A decision tree consists of:\n"
+               "- **Root node**: Represents the entire dataset\n"
+               "- **Internal nodes**: Test a feature (e.g., \"Age < 30?\")\n"
+               "- **Branches**: Represent outcomes of tests (e.g., \"Yes\", \"No\")\n"
+               "- **Leaf nodes**: Represent final decisions (class labels or values)\n\n"
+               "### Key Concepts\n\n"
+               "- **Splitting criterion**: How to choose the best feature to split on\n"
+               "- **Pruning**: Techniques to prevent overfitting\n"
+               "- **Tree depth**: Controls model complexity\n"
+               "- **Leaf size**: Minimum samples required to make a leaf node\n"
+    ))
+
+    # Markdown cell: Splitting Criteria for Classification
+    cells.append(new_markdown_cell(
+        source="### Splitting Criteria for Classification\n\n"
+               "Common measures to determine the best split:\n\n"
+               "$$\n"
+               "\\text{Entropy}(S) = -\\sum_{i=1}^c p_i \\log_2 p_i\n"
+               "$$\n\n"
+               "*Entropy: Measures impurity or disorder in a set*\n\n"
+               "$$\n"
+               "\\text{Information Gain}(S, A) = \\text{Entropy}(S) - \\sum_{v \\in \\text{Values}(A)} \\frac{|S_v|}{|S|} \\text{Entropy}(S_v)\n"
+               "$$\n\n"
+               "*Information Gain: Reduction in entropy from splitting on attribute A*\n\n"
+               "$$\n"
+               "\\text{Gini}(S) = 1 - \\sum_{i=1}^c p_i^2\n"
+               "$$\n\n"
+               "*Gini Impurity: Probability of misclassifying a randomly chosen element*\n\n"
+               "*What each symbol means:*\n"
+               "- **S**: Dataset or subset\n"
+               "- **c**: Number of classes\n"
+               "- **p_i**: Proportion of class i in S\n"
+               "- **A**: Attribute/feature to split on\n"
+               "- **Values(A)**: Possible values of attribute A\n"
+               "- **S_v**: Subset of S where attribute A has value v\n"
+    ))
+
+    # Markdown cell: Splitting Criteria for Regression
+    cells.append(new_markdown_cell(
+        source="### Splitting Criteria for Regression\n\n"
+               "For regression trees, we minimize:\n\n"
+               "$$\n"
+               "\\text{Variance}(S) = \\frac{1}{|S|} \\sum_{i=1}^{|S|} (y_i - \\bar{y})^2\n"
+               "$$\n\n"
+               "*Variance: Measures spread of target values*\n\n"
+               "$$\n"
+               "\\text{Reduction in Variance}(S, A) = \\text{Variance}(S) - \\sum_{v \\in \\text{Values}(A)} \\frac{|S_v|}{|S|} \\text{Variance}(S_v)\n"
+               "$$\n\n"
+               "*Reduction in Variance: How much splitting reduces variance*\n\n"
+               "*What each symbol means:*\n"
+               "- **S**: Dataset or subset\n"
+               "- **y_i**: Target value for sample i\n"
+               "- **\\bar{y}**: Mean target value in S\n"
+               "- **A**: Attribute/feature to split on\n"
+               "- **Values(A)**: Possible values of attribute A\n"
+               "- **S_v**: Subset of S where attribute A has value v\n"
+    ))
+
+    # Markdown cell: Worked Example by Hand
+    cells.append(new_markdown_cell(
+        source="## Worked Example by Hand\n\n"
+               "> 🧮 Simple decision tree: Classify these 2D points as blue or red:\n"
+               "Blue: [2,2], [2,3], [3,2], [8,8], [8,9], [9,8]\n"
+               "Red:  [2,8], [3,7], [4,6], [8,2], [9,1], [9,3]\n\n"
+               "### Step 1: Visualize the data\n\n"
+               "Points are clearly separable - blue points clustered in two groups, "
+               "red points filling the gaps.\n\n"
+               "### Step 2: Choose first split (using Gini impurity)\n\n"
+               "Test splitting on x₁ at various thresholds:\n"
+               "- Split at x₁ = 4.5: "
+               "Left: 6 blue, 3 red → Gini = 0.38\n"
+               "Right: 0 blue, 6 red → Gini = 0.0\n"
+               "Weighted Gini = (9/15)×0.38 + (6/15)×0.0 = 0.23\n"
+               "\n"
+               "Test splitting on x₂ at various thresholds:\n"
+               "- Split at x₂ = 5.5: "
+               "Bottom: 3 blue, 6 red → Gini = 0.38\n"
+               "Top: 3 blue, 0 red → Gini = 0.0\n"
+               "Weighted Gini = (9/15)×0.38 + (6/15)×0.0 = 0.23\n"
+               "\n"
+               "Both splits give same Gini improvement. Choose x₁ = 4.5.\n\n"
+               "### Step 3: Split the data\n\n"
+               "**Left branch (x₁ < 4.5)**: 6 blue, 3 red\n"
+               "  - Further split on x₂ = 5.5: "
+               "  - Bottom: 0 blue, 3 red → Pure red leaf\n"
+               "  - Top: 6 blue, 0 red → Pure blue leaf\n"
+               "\n"
+               "**Right branch (x₁ ≥ 4.5)**: 0 blue, 6 red → Pure red leaf\n\n"
+               "### Final Tree:\n"
+               "IF x₁ < 4.5 THEN\n"
+               "  IF x₂ < 5.5 THEN Class = Red\n"
+               "  ELSE Class = Blue\n"
+               "ELSE\n"
+               "  Class = Red\n\n"
+               "<em>Answer: The decision tree perfectly separates the two classes with just two splits.</em>"
+    ))
+
+    # Code cell: Import libraries
+    cells.append(new_code_cell(
+        source="import numpy as np\n"
+               "import matplotlib.pyplot as plt\n"
+               "import seaborn as sns\n"
+               "from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor, export_text, plot_tree\n"
+               "from sklearn.datasets import make_classification, make_regression, load_iris\n"
+               "from sklearn.model_selection import train_test_split\n"
+               "from sklearn.metrics import accuracy_score, mean_squared_error\n"
+               "import pandas as pd\n"
+    ))
+
+    # Code cell: Classification example
+    cells.append(new_code_cell(
+        source="# Decision Tree Classification\n"
+               "# Create a simple classification dataset\n"
+               "X, y = make_classification(n_samples=200, n_features=2, n_redundant=0, "
+               "                           n_informative=2, n_clusters_per_class=1, "
+               "                           random_state=42)\n"
+               "\n"
+               "# Split into train and test\n"
+               "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)\n"
+               "\n"
+               "# Train decision tree\n"
+               "clf = DecisionTreeClassifier(max_depth=3, random_state=42)\n"
+               "clf.fit(X_train, y_train)\n"
+               "\n"
+               "# Make predictions\n"
+               "y_pred = clf.predict(X_test)\n"
+               "accuracy = accuracy_score(y_test, y_pred)\n"
+               "\n"
+               "print(f\"Accuracy: {accuracy:.4f}\")\n"
+               "\n"
+               "# Visualize the decision tree\n"
+               "plt.figure(figsize=(20, 10))\n"
+               "plot_tree(clf, feature_names=['Feature 1', 'Feature 2'], "
+               "          class_names=['Class 0', 'Class 1'], "
+               "          filled=True, rounded=True, fontsize=10)\n"
+               "plt.title('Decision Tree Classification (max_depth=3)')\n"
+               "plt.show()\n"
+               "\n"
+               "# Also show text representation\n"
+               "tree_rules = export_text(clf, feature_names=['Feature 1', 'Feature 2'])\n"
+               "print(\"\\nTree rules:\")\n"
+               "print(tree_rules)"
+    ))
+
+    # Code cell: Regression example
+    cells.append(new_code_cell(
+        source="# Decision Tree Regression\n"
+               "# Create a simple regression dataset\n"
+               "X, y = make_regression(n_samples=200, n_features=1, noise=10, random_state=42)\n"
+               "\n"
+               "# Split into train and test\n"
+               "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)\n"
+               "\n"
+               "# Train decision tree regressor\n"
+               "reg = DecisionTreeRegressor(max_depth=4, random_state=42)\n"
+               "reg.fit(X_train, y_train)\n"
+               "\n"
+               "# Make predictions\n"
+               "y_pred = reg.predict(X_test)\n"
+               "mse = mean_squared_error(y_test, y_pred)\n"
+               "\n"
+               "print(f\"Mean Squared Error: {mse:.4f}\")\n"
+               "\n"
+               "# Visualize results\n"
+               "plt.figure(figsize=(12, 5))\n"
+               "\n"
+               "plt.subplot(1, 2, 1)\n"
+               "plt.scatter(X, y, alpha=0.6)\n"
+               "plt.scatter(X_test, y_pred, color='red', alpha=0.8, s=30)\n"
+               "plt.xlabel('Feature')\n"
+               "plt.ylabel('Target')\n"
+               "plt.title('Decision Tree Regression')\n"
+               "plt.legend(['Training Data', 'Test Predictions'])\n"
+               "plt.grid(True, alpha=0.3)\n"
+               "\n"
+               "plt.subplot(1, 2, 2)\n"
+               "plt.scatter(y_test, y_pred, alpha=0.6)\n"
+               "plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2)\n"
+               "plt.xlabel('Actual Values')\n"
+               "plt.ylabel('Predicted Values')\n"
+               "plt.title('Actual vs Predicted')\n"
+               "plt.grid(True, alpha=0.3)\n"
+               "\n"
+               "plt.tight_layout()\n"
+               "plt.show()"
+    ))
+
+    # Code cell: Iris dataset example
+    cells.append(new_code_cell(
+        source="# Decision Tree on Iris Dataset\n"
+               "# Load iris dataset\n"
+               "iris = load_iris()\n"
+               "X, y = iris.data, iris.target\n"
+               "\n"
+               "# Split into train and test\n"
+               "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)\n"
+               "\n"
+               "# Train decision tree\n"
+               "clf_iris = DecisionTreeClassifier(max_depth=3, random_state=42)\n"
+               "clf_iris.fit(X_train, y_train)\n"
+               "\n"
+               "# Evaluate\n"
+               "y_pred = clf_iris.predict(X_test)\n"
+               "accuracy = accuracy_score(y_test, y_pred)\n"
+               "\n"
+               "print(f\"Iris dataset accuracy: {accuracy:.4f}\")\n"
+               "\n"
+               "# Visualize the tree\n"
+               "plt.figure(figsize=(15, 10))\n"
+               "plot_tree(clf_iris, feature_names=iris.feature_names, "
+               "          class_names=iris.target_names, "
+               "          filled=True, rounded=True, fontsize=9)\n"
+               "plt.title('Decision Tree on Iris Dataset')\n"
+               "plt.show()"
+    ))
+
+    # Markdown cell: Watch Out
+    cells.append(new_markdown_cell(
+        source="## Watch Out: Common Mistakes & Exam Traps\n\n"
+           "> ⚠️ **Common mistakes to avoid:**\n"
+           "> 1. **Overfitting**: Decision trees can easily overfit, especially when deep; "
+           "always use pruning, max_depth, or min_samples_leaf to control complexity.\n"
+           "> 2. **Instability**: Small changes in data can lead to completely different trees; "
+           "consider ensemble methods for more stable predictions.\n"
+           "> 3. **Bias toward features with more levels**: Features with many distinct values "
+           "may be preferred in splitting; consider encoding or using entropy-based measures.\n"
+           "> 4. **Ignoring feature scaling**: While decision trees don't require scaling, "
+           "some implementations may be affected by very different scales.\n"
+           "> 5. **Creating uninterpretable trees**: Very deep trees become impossible to interpret; "
+           "balance accuracy with interpretability.\n"
+           "> 6. **Overlooking that trees create axis-aligned splits**: Decision trees can only "
+           "split on single features at a time; diagonal boundaries require multiple splits.\n"
+           "> 7. **Neglecting to handle missing values**: Different implementations handle missing "
+           "values differently; check your specific library's behavior.\n"
+           "> 8. **Using accuracy alone for evaluation**: Consider precision, recall, F1-score, "
+           "especially for imbalanced datasets.\n"
+    ))
+
+    # Markdown cell: Experiment Link
+    cells.append(new_markdown_cell(
+        source="## Experiment Link\n\n"
+           "> 🔬 Run **Section 2: Decision Tree Experiment** in this notebook to explore "
+           "how decision tree parameters affect model performance and visualize different "
+           "tree structures.\n\n"
+           "This section will include:\n"
+           "- Exploration of max_depth, min_samples_split, min_samples_leaf parameters\n"
+           "- Visualization of decision boundaries for different tree complexities\n"
+           "- Comparison of entropy vs Gini splitting criteria\n"
+           "- Analysis of overfitting as tree depth increases\n"
+           "- Feature importance analysis\n"
+           "- Comparison with linear models to show when trees excel\n"
+    ))
+
+    # Markdown cell: Videos to Watch
+    cells.append(new_markdown_cell(
+        source="## Videos to Watch\n\n"
+           "> 📺 **Recommended video searches:**\n\n"
+           "1. **Decision Tree Classification & Regression**\n"
+           "   - Search: https://www.youtube.com/results?search_query=decision+tree+machine+learning\n"
+           "   - Watch for: Clear explanation of how decision trees work for both classification and regression\n\n"
+           "2. **StatQuest: Decision Trees Part 1 - Basics**\n"
+           "   - Search: https://www.youtube.com/results?search_query=StatQuest+Decision+Trees\n"
+           "   - Watch for: Intuitive breakdown of entropy, information gain, and tree building\n\n"
+           "3. **Machine Learning Zoomcamp: Trees and Ensemble Methods**\n"
+           "   - Search: https://www.youtube.com/results?search_query=trees+ensemble+methods+machine+learning+zoomcamp\n"
+           "   - Watch for: Practical implementation and connection to Random Forests, Gradient Boosting\n"
+    ))
+
+    # Markdown cell: Practice Questions
+    cells.append(new_markdown_cell(
+        source="## Practice Questions\n\n"
+           "> ❓ Try to solve these yourself first, then check the answers below!\n\n"
+           "### Question 1 (Concept): What is the main advantage of decision trees over linear models?\n\n"
+           "<details>\n"
+           "<summary>Click to reveal answer</summary>\n\n"
+           "Decision trees can capture non-linear relationships and feature interactions without "
+           "requiring explicit feature engineering, while linear models can only capture linear "
+           "relationships unless interaction terms are manually added.\n\n"
+           "</details>\n\n"
+           "\n"
+           "### Question 2 (Concept): How does entropy measure impurity in a dataset?\n\n"
+           "<details>\n"
+           "<summary>Click to reveal answer</summary>\n\n"
+           "Entropy measures the disorder or impurity in a dataset. A pure dataset (all same class) "
+           "has entropy of 0. A perfectly balanced dataset (50/50 split between two classes) "
+           "has entropy of 1. Higher entropy indicates more mixed classes.\n\n"
+           "</details>\n\n"
+           "\n"
+           "### Question 3 (Calculation): Given a dataset with 4 samples of class A and 1 sample of class B, "
+           "what is the Gini impurity?\n\n"
+           "<details>\n"
+           "<summary>Click to reveal answer</summary>\n\n"
+           "p_A = 4/5 = 0.8, p_B = 1/5 = 0.2\n"
+           "Gini = 1 - (p_A² + p_B²) = 1 - (0.8² + 0.2²) = 1 - (0.64 + 0.04) = 1 - 0.68 = 0.32\n\n"
+           "</details>\n\n"
+           "\n"
+           "### Question 4 (Concept): What is the purpose of pruning in decision trees?\n\n"
+           "<details>\n"
+           "<summary>Click to reveal answer</summary>\n\n"
+           "Pruning reduces the size of decision trees by removing sections that provide little "
+           "power to classify instances, which helps prevent overfitting and improves generalization "
+           "to unseen data.\n\n"
+           "</details>\n\n"
+           "\n"
+           "### Question 5 (Explain it simply): When would you prefer a decision tree over a neural network?\n\n"
+           "<details>\n"
+           "<summary>Click to reveal answer</summary>\n\n"
+           "Prefer decision trees when: you need interpretable models, you have small to medium datasets, "
+           "you want fast training and prediction, you have mixed data types (numerical and categorical), "
+           "or you need to explain predictions to stakeholders.\n\n"
+           "</details>\n"
+    ))
+
+    # Markdown cell: Cheat Sheet Draft
+    cells.append(new_markdown_cell(
+        source="## Cheat Sheet Draft\n\n"
+           "> 📝 This section is optimized for printing - it should fit approximately 1/7 of an A4 page when printed.\n\n"
+           "- Optimized for printing - fits approximately 1/7 of an A4 page\n"
+           "- Contains key formulas, definitions, and common mistakes\n"
+           "- Designed for quick review and reference\n\n"
+           "### Key Formulas\n\n"
+           "$$\n"
+           "\\text{Entropy}(S) = -\\sum_{i=1}^c p_i \\log_2 p_i\n"
+           "$$\n\n"
+           "*Entropy*\n\n"
+           "$$\n"
+           "\\text{Information Gain}(S, A) = \\text{Entropy}(S) - \\sum_{v \\in \\text{Values}(A)} \\frac{|S_v|}{|S|} \\text{Entropy}(S_v)\n"
+           "$$\n\n"
+           "*Information Gain*\n\n"
+           "$$\n"
+           "\\text{Gini}(S) = 1 - \\sum_{i=1}^c p_i^2\n"
+           "$$\n\n"
+           "*Gini Impurity*\n\n"
+           "$$\n"
+           "\\text{Variance}(S) = \\frac{1}{|S|} \\sum_{i=1}^{|S|} (y_i - \\bar{y})^2\n"
+           "$$\n\n"
+           "*Variance*\n\n"
+           "### Key Definitions\n\n"
+           "- **Root Node:** Top node of the tree representing the entire dataset\n"
+           "- **Decision Node:** Internal node that tests a feature\n"
+           "- **Leaf Node:** Terminal node that represents a class label or value\n"
+           "- **Splitting Criterion:** Method used to choose the best feature to split on\n"
+           "- **Pruning:** Technique to reduce tree size and prevent overfitting\n"
+           "- **Feature Importance:** Measure of how much each feature contributes to tree purity\n"
+           "- **Max Depth:** Maximum number of levels in the tree\n"
+           "- **Min Samples Leaf:** Minimum samples required to be at a leaf node\n"
+           "### Common Mistakes to Avoid\n\n"
+           "- Overfitting by making trees too deep without pruning\n"
+           "- Ignoring the instability of decision trees (small data changes → big tree changes)\n"
+           "- Bias toward features with many distinct values\n"
+           "- Creating overly complex trees that are impossible to interpret\n"
+           "- Overlooking that decision trees create axis-aligned decision boundaries\n"
+           "- Neglecting to handle missing values appropriately\n"
+           "- Using a single accuracy metric without considering precision/recall for imbalanced data\n"
+    ))
+
+    # Add all cells to the notebook
+    notebook.cells = cells
+
+    # Save the notebook
+    with open('notebooks/07_decision_trees.ipynb', 'w', encoding='utf-8') as f:
+        nbformat.write(notebook, f)
+
+    # Validate the notebook
+    nbformat.validate(notebook)
+
+    # Load the file and count cells
+    with open('notebooks/07_decision_trees.ipynb', 'r', encoding='utf-8') as f:
+        loaded_notebook = nbformat.read(f, as_version=4)
+
+    code_cells = sum(1 for cell in loaded_notebook.cells if cell.cell_type == 'code')
+    markdown_cells = sum(1 for cell in loaded_notebook.cells if cell.cell_type == 'markdown')
+
+    print(f"Code cells: {code_cells}")
+    print(f"Markdown cells: {markdown_cells}")
+
+    return notebook
+
+if __name__ == "__main__":
+    create_lecture07_notebook()
